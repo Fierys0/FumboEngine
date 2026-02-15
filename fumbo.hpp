@@ -1,5 +1,4 @@
 #pragma once
-#include "igamestate.hpp"
 #include "raylib.h"
 #include "raymath.h"
 #include <algorithm>
@@ -15,6 +14,24 @@
 #include <unordered_map>
 #include <vector>
 
+// === FUMBO IGameState
+
+// Abstract base class for all game states
+class IGameState {
+public:
+  virtual ~IGameState() = default;
+
+  virtual void Init() = 0;
+  virtual void Cleanup() = 0;
+
+  virtual void Pause() {}
+  virtual void Resume() {}
+
+  virtual void Update() = 0;
+  virtual void DrawClean() = 0;
+  virtual void DrawDirty() = 0;
+};
+
 // Forward declarations and enums
 enum class ButtonAlign { LEFT, MIDDLE, RIGHT, TOP, BOTTOM };
 
@@ -23,30 +40,26 @@ namespace Fumbo {
 namespace Graphic2D {
 
 // Shape types supported by the physics engine
-enum class ShapeType {
-  Rectangle,
-  Circle,
-  Triangle,
-  Polygon,
-  Line
-};
+enum class ShapeType { Rectangle, Circle, Triangle, Polygon, Line };
 
 // Body type determines physics behavior
 enum class BodyType {
-  Static,  // Doesn't move, but can collide
-  Dynamic  // Affected by gravity and forces
+  Static, // Doesn't move, but can collide
+  Dynamic // Affected by gravity and forces
 };
 
 // Collision data for contact resolution
 struct CollisionContact {
-  Vector2 point;        // Contact point in world space
-  Vector2 normal;       // Collision normal (from A to B)
-  float penetration;    // Penetration depth
-  bool hasCollision;    // Whether collision occurred
+  Vector2 point;     // Contact point in world space
+  Vector2 normal;    // Collision normal (from A to B)
+  float penetration; // Penetration depth
+  bool hasCollision; // Whether collision occurred
 };
 
 // Forward declaration
 class Object;
+
+// === FUMBO Collision
 
 // Collision detection functions
 namespace Collision {
@@ -78,7 +91,7 @@ std::vector<Vector2> GetRectangleVertices(Vector2 pos, float width,
                                           float height, float rotation);
 Rectangle GetBoundingBox(const std::vector<Vector2> &vertices);
 bool LineIntersection(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4,
-                     Vector2 *intersection = nullptr);
+                      Vector2 *intersection = nullptr);
 
 } // namespace Collision
 
@@ -88,16 +101,16 @@ public:
   static constexpr int MAX_LAYERS = 32;
 
   CollisionLayers() : layerMask(0xFFFFFFFF) {} // Collide with all by default
-  
+
   void SetLayer(int layer) { currentLayer = layer; }
   int GetLayer() const { return currentLayer; }
-  
+
   void SetMask(uint32_t mask) { layerMask = mask; }
   uint32_t GetMask() const { return layerMask; }
-  
+
   void EnableLayer(int layer) { layerMask |= (1 << layer); }
   void DisableLayer(int layer) { layerMask &= ~(1 << layer); }
-  
+
   bool CanCollideWith(const CollisionLayers &other) const {
     return (layerMask & (1 << other.currentLayer)) != 0;
   }
@@ -167,14 +180,14 @@ public:
   void SetCollidable(bool collidable) { isCollidable = collidable; }
   bool IsCollidable() const { return isCollidable; }
 
-  void SetCollisionLayers(const CollisionLayers& layers) {
+  void SetCollisionLayers(const CollisionLayers &layers) {
     collisionLayers = layers;
   }
   CollisionLayers &GetCollisionLayers() { return collisionLayers; }
   const CollisionLayers &GetCollisionLayers() const { return collisionLayers; }
 
   // Check if this object is currently colliding with another
-  bool IsCollidingWith(const Object* other) const;
+  bool IsCollidingWith(const Object *other) const;
 
   // ===== Shape-Specific Getters =====
   float GetWidth() const { return width; }
@@ -190,7 +203,10 @@ public:
   Color GetColor() const { return color; }
 
   // Texture support
-  void SetTexture(Texture2D tex) { texture = tex; hasTexture = true; }
+  void SetTexture(Texture2D tex) {
+    texture = tex;
+    hasTexture = true;
+  }
   void ClearTexture() { hasTexture = false; }
   bool HasTexture() const { return hasTexture; }
 
@@ -208,8 +224,8 @@ public:
 private:
   // Shape properties
   ShapeType shapeType;
-  float width, height;  // Rectangle
-  float radius;         // Circle
+  float width, height;           // Rectangle
+  float radius;                  // Circle
   std::vector<Vector2> vertices; // Polygon/Triangle
 
   // Transform
@@ -229,7 +245,7 @@ private:
 
   // Collision
   bool isTrigger;
-  bool isCollidable = true;  // Can this object collide?
+  bool isCollidable = true; // Can this object collide?
   CollisionLayers collisionLayers;
 
   // Visual
@@ -250,12 +266,14 @@ private:
 } // namespace Graphic2D
 } // namespace Fumbo
 
+// === FUMBO ASSETS
+
 // Fumbo Asset Pack Types
 namespace Fumbo {
 namespace Assets {
 
 // Asset pack file format
-constexpr uint32_t PACK_MAGIC = 0x4B415046;  // "FPAK"
+constexpr uint32_t PACK_MAGIC = 0x4B415046; // "FPAK"
 constexpr uint32_t PACK_VERSION = 1;
 
 struct PackHeader {
@@ -273,16 +291,17 @@ struct PackEntry {
 };
 
 // Normalize path separators (Windows backslash to forward slash)
-inline std::string NormalizePath(const std::string& path) {
+inline std::string NormalizePath(const std::string &path) {
   std::string normalized = path;
-  for (char& c : normalized) {
-    if (c == '\\') c = '/';
+  for (char &c : normalized) {
+    if (c == '\\')
+      c = '/';
   }
   return normalized;
 }
 
 // Simple hash function for filenames
-inline uint64_t HashString(const std::string& str) {
+inline uint64_t HashString(const std::string &str) {
   // Normalize path before hashing to ensure Windows/Linux compatibility
   std::string normalized = NormalizePath(str);
   uint64_t hash = 5381;
@@ -297,19 +316,19 @@ public:
   AssetPack() : loaded(false) {}
 
   // Load a pack file
-  bool Load(const std::string& packPath);
+  bool Load(const std::string &packPath);
 
   // Check if pack is loaded
   bool IsLoaded() const { return loaded; }
 
   // Check if asset exists in pack
-  bool HasAsset(const std::string& assetPath) const;
+  bool HasAsset(const std::string &assetPath) const;
 
   // Load asset data (decrypted)
-  std::vector<uint8_t> LoadAsset(const std::string& assetPath) const;
+  std::vector<uint8_t> LoadAsset(const std::string &assetPath) const;
 
   // Get original size of asset
-  size_t GetAssetSize(const std::string& assetPath) const;
+  size_t GetAssetSize(const std::string &assetPath) const;
 
   // Unload pack
   void Unload();
@@ -322,6 +341,8 @@ private:
 
 } // namespace Assets
 } // namespace Fumbo
+
+// === FUMBO SHADER
 
 // Fumbo Fade Effects
 class FadeEffect {
@@ -386,24 +407,17 @@ public:
   bool IsGroupFinished(int groupID) const;
 };
 
+// === FUMBO UI
+
 // Fumbo UI Types
 namespace Fumbo {
 namespace UI {
 
 // Text alignment options
-enum class TextAlign {
-  LEFT,
-  CENTER,
-  RIGHT
-};
+enum class TextAlign { LEFT, CENTER, RIGHT };
 
 // Message box animation types
-enum class BoxAnimation {
-  NONE,
-  FADE,
-  SLIDE_UP,
-  SLIDE_DOWN
-};
+enum class BoxAnimation { NONE, FADE, SLIDE_UP, SLIDE_DOWN };
 
 // Message box style configuration
 struct MessageBoxStyle {
@@ -411,46 +425,46 @@ struct MessageBoxStyle {
   Color backgroundColor = Color{0, 0, 0, 200};
   Texture2D backgroundTexture = {0};
   bool useTexture = false;
-  bool useNinePatch = false;  // 9-slice scaling for texture
-  
+  bool useNinePatch = false; // 9-slice scaling for texture
+
   // NinePatch settings (border sizes for 9-slice)
   int ninePatchLeft = 16;
   int ninePatchRight = 16;
   int ninePatchTop = 16;
   int ninePatchBottom = 16;
-  
+
   // Border
   Color borderColor = WHITE;
   float borderThickness = 2.0f;
   float borderRounding = 0.0f;
-  
+
   // Padding (space between box edge and text)
   float paddingTop = 20.0f;
   float paddingBottom = 20.0f;
   float paddingLeft = 20.0f;
   float paddingRight = 20.0f;
-  
+
   // Shadow
   bool enableShadow = false;
   Vector2 shadowOffset = {4.0f, 4.0f};
   Color shadowColor = Color{0, 0, 0, 100};
-  
+
   // Animation
   BoxAnimation animation = BoxAnimation::NONE;
   float animationDuration = 0.3f;
-  float animationProgress = 1.0f;  // 0.0 to 1.0
+  float animationProgress = 1.0f; // 0.0 to 1.0
 };
 
 // Text style configuration
 struct TextStyle {
   TextAlign alignment = TextAlign::LEFT;
   float lineHeightMultiplier = 1.2f;
-  
+
   // Text shadow
   bool enableShadow = false;
   Vector2 shadowOffset = {2.0f, 2.0f};
   Color shadowColor = Color{0, 0, 0, 150};
-  
+
   // Text outline
   bool enableOutline = false;
   float outlineThickness = 1.0f;
@@ -463,10 +477,10 @@ struct SliderConfig {
   Color progressColor = SKYBLUE;
   Color knobColor = DARKGRAY;
   Color outlineColor = DARKGRAY;
-  
+
   // Dimensions
   float knobWidth = 20.0f;
-  float knobHeight = 0.0f; // 0 = match bounds height
+  float knobHeight = 0.0f;  // 0 = match bounds height
   float trackHeight = 0.0f; // 0 = match bounds height
   float outlineThickness = 1.0f;
 
@@ -479,7 +493,7 @@ struct SliderConfig {
 } // namespace UI
 } // namespace Fumbo
 
-// Fumbo Graphics
+// === Fumbo Graphics
 namespace Fumbo {
 namespace Graphic2D {
 // Drawing helpers
@@ -575,7 +589,7 @@ void DrawBackground(Texture2D);
 } // namespace Graphic2D
 } // namespace Fumbo
 
-// Fumbo Physics
+// === Fumbo Physics
 namespace Fumbo {
 namespace Graphic2D {
 
@@ -651,7 +665,7 @@ private:
 } // namespace Graphic2D
 } // namespace Fumbo
 
-// Fumbo Audio
+// === Fumbo Audio
 namespace Fumbo {
 namespace Audio {
 enum class AudioType { SOUND, MUSIC };
@@ -723,6 +737,8 @@ private:
 };
 } // namespace Audio
 } // namespace Fumbo
+
+// === FUMBO BUTTON
 
 // Fumbo UI Classes
 namespace Fumbo {
@@ -796,7 +812,7 @@ private:
   int m_lastHeight = 0;
   Camera2D *m_camera = nullptr;
   bool m_worldSpace = false;
-  
+
   // State tracking for auto-update
   bool m_isPressed = false;
   bool m_isReleased = false;
@@ -815,7 +831,7 @@ public:
   void SetValue(float value);
   float GetValue() const;
 
-  void SetStyle(const SliderConfig& config);
+  void SetStyle(const SliderConfig &config);
 
 private:
   float m_min = 0.0f;
@@ -827,51 +843,56 @@ private:
   SliderConfig m_config;
 };
 
+// === FUMBO VN
+
 class VisualNovel {
 public:
-  VisualNovel(const std::string& text, float charsPerSecond);
+  VisualNovel(const std::string &text, float charsPerSecond);
 
   void Update(float deltaTime);
-  void Draw(Font font, Vector2 startPos, float fontSize, float spacing, float maxX, float maxY,
-            Color color);
+  void Draw(Font font, Vector2 startPos, float fontSize, float spacing,
+            float maxX, float maxY, Color color);
 
   void Reset();
-  void Clear();  // Unload scene (clear characters/text)
+  void Clear(); // Unload scene (clear characters/text)
   void Skip();
 
   // New Features
-  void SetSpeaker(const std::string& name, Color color = WHITE);
+  void SetSpeaker(const std::string &name, Color color = WHITE);
   void SetTypingSound(Sound sound);
-  void SetText(const std::string& text);  // Helper to reset with new text
-  bool IsComplete() const;  // Check if typing animation is complete
-
+  void SetText(const std::string &text); // Helper to reset with new text
+  bool IsComplete() const; // Check if typing animation is complete
 
   // Character Sprites
-  void AddCharacter(const std::string& name, Texture2D sprite, float scale = 1.0f);
-  void SetCharacterPosition(const std::string& name, Vector2 pos);  // Instant Teleport
-  void MoveCharacterPosition(const std::string& name, Vector2 targetPos,
-                             float duration);  // Animated Move
+  void AddCharacter(const std::string &name, Texture2D sprite,
+                    float scale = 1.0f);
+  void SetCharacterPosition(const std::string &name,
+                            Vector2 pos); // Instant Teleport
+  void MoveCharacterPosition(const std::string &name, Vector2 targetPos,
+                             float duration); // Animated Move
 
   // Fading
-  void SetCharacterAlpha(const std::string& name, float alpha);
-  void FadeCharacter(const std::string& name, float targetAlpha, float duration);
-  void FadeInCharacter(const std::string& name, float duration);
-  void FadeOutCharacter(const std::string& name, float duration);
+  void SetCharacterAlpha(const std::string &name, float alpha);
+  void FadeCharacter(const std::string &name, float targetAlpha,
+                     float duration);
+  void FadeInCharacter(const std::string &name, float duration);
+  void FadeOutCharacter(const std::string &name, float duration);
 
-  void DrawSprites();  // Call before drawing text box
+  void DrawSprites(); // Call before drawing text box
 
   // Message Box Customization
-  void SetMessageBoxStyle(const MessageBoxStyle& style);
+  void SetMessageBoxStyle(const MessageBoxStyle &style);
   void SetMessageBoxTexture(Texture2D texture, bool useNinePatch = false);
-  void SetMessageBoxBounds(Rectangle bounds);  // Set position and size
+  void SetMessageBoxBounds(Rectangle bounds); // Set position and size
   void EnableMessageBox(bool enable);
-  
+
   // Text Customization
-  void SetTextStyle(const TextStyle& style);
+  void SetTextStyle(const TextStyle &style);
   void SetTextAlignment(TextAlign alignment);
-  
+
   // Complete rendering (sprites + message box + text)
-  void DrawComplete(Font font, float fontSize, float spacing, Color textColor = WHITE);
+  void DrawComplete(Font font, float fontSize, float spacing,
+                    Color textColor = WHITE);
 
 private:
   // Internal usage to hold process state
@@ -919,21 +940,22 @@ private:
   int m_visibleChars;
   float m_timer;
   float m_charsPerSecond;
-  
+
   // Message box and text styling
   MessageBoxStyle m_boxStyle;
   TextStyle m_textStyle;
-  Rectangle m_boxBounds = {50, 500, 1180, 200};  // Default bounds
+  Rectangle m_boxBounds = {50, 500, 1180, 200}; // Default bounds
   bool m_enableMessageBox = false;
 
-  void RecalculateWrapping(Font font, float fontSize, float spacing, float maxX);
+  void RecalculateWrapping(Font font, float fontSize, float spacing,
+                           float maxX);
   bool m_wrappingDone = false;
 };
 
 } // namespace UI
 } // namespace Fumbo
 
-// Fumbo Utils
+// === Fumbo Utils
 namespace Fumbo {
 namespace Utils {
 constexpr float UI_WIDTH = 1280.0f;
@@ -1015,7 +1037,7 @@ private:
 } // namespace Video
 } // namespace Fumbo
 
-// Fumbo Shader
+// === Fumbo Shader Manager
 namespace Fumbo {
 
 class ShaderManager {
@@ -1059,7 +1081,7 @@ private:
 
 // Fumbo
 
-// Fumbo Engine
+// === Fumbo Engine
 namespace Fumbo {
 
 class Engine {
