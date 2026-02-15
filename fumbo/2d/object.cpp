@@ -95,48 +95,49 @@ std::vector<Vector2> Object::GetVertices() const {
     }
     return worldVerts;
   } else if (shapeType == ShapeType::Rectangle) {
-    return Collision::GetRectangleVertices(
-        position, width * scale, height * scale, rotation);
+    return Collision::GetRectangleVertices(position, width * scale,
+                                           height * scale, rotation);
   }
   return {};
 }
 
 Rectangle Object::GetAABB() const {
   switch (shapeType) {
-    case ShapeType::Rectangle: {
-      // For non-rotated rectangles, AABB is simple
-      if (rotation == 0.0f) {
-        float halfW = (width * scale) / 2;
-        float halfH = (height * scale) / 2;
-        return {position.x - halfW, position.y - halfH, width * scale, height * scale};
-      }
-      // For rotated rectangles, get bounding box of vertices
-      auto verts = GetVertices();
-      return Collision::GetBoundingBox(verts);
+  case ShapeType::Rectangle: {
+    // For non-rotated rectangles, AABB is simple
+    if (rotation == 0.0f) {
+      float halfW = (width * scale) / 2;
+      float halfH = (height * scale) / 2;
+      return {position.x - halfW, position.y - halfH, width * scale,
+              height * scale};
     }
-    
-    case ShapeType::Circle: {
-      float r = radius * scale;
-      return {position.x - r, position.y - r, r * 2, r * 2};
-    }
-    
-    case ShapeType::Triangle:
-    case ShapeType::Polygon: {
-      auto verts = GetVertices();
-      return Collision::GetBoundingBox(verts);
-    }
-    
-    case ShapeType::Line: {
-      Vector2 worldStart = Vector2Add(position, lineStart);
-      Vector2 worldEnd = Vector2Add(position, lineEnd);
-      float minX = fminf(worldStart.x, worldEnd.x);
-      float maxX = fmaxf(worldStart.x, worldEnd.x);
-      float minY = fminf(worldStart.y, worldEnd.y);
-      float maxY = fmaxf(worldStart.y, worldEnd.y);
-      return {minX, minY, maxX - minX, maxY - minY};
-    }
+    // For rotated rectangles, get bounding box of vertices
+    auto verts = GetVertices();
+    return Collision::GetBoundingBox(verts);
   }
-  
+
+  case ShapeType::Circle: {
+    float r = radius * scale;
+    return {position.x - r, position.y - r, r * 2, r * 2};
+  }
+
+  case ShapeType::Triangle:
+  case ShapeType::Polygon: {
+    auto verts = GetVertices();
+    return Collision::GetBoundingBox(verts);
+  }
+
+  case ShapeType::Line: {
+    Vector2 worldStart = Vector2Add(position, lineStart);
+    Vector2 worldEnd = Vector2Add(position, lineEnd);
+    float minX = fminf(worldStart.x, worldEnd.x);
+    float maxX = fmaxf(worldStart.x, worldEnd.x);
+    float minY = fminf(worldStart.y, worldEnd.y);
+    float maxY = fmaxf(worldStart.y, worldEnd.y);
+    return {minX, minY, maxX - minX, maxY - minY};
+  }
+  }
+
   return {0, 0, 0, 0};
 }
 
@@ -149,11 +150,12 @@ void Object::Render() const {
       Rectangle rect = {position.x - (width * scale) / 2,
                         position.y - (height * scale) / 2, width * scale,
                         height * scale};
-      
+
       if (hasTexture) {
         // Draw with texture
         Rectangle source = {0, 0, (float)texture.width, (float)texture.height};
-        Fumbo::Graphic2D::DrawTexturePro(texture, source, rect, {0, 0}, 0, WHITE);
+        Fumbo::Graphic2D::DrawTexturePro(texture, source, rect, {0, 0}, 0,
+                                         WHITE);
       } else if (isOutline) {
         Fumbo::Graphic2D::DrawRectangleLinesEx(rect, thickness, color);
       } else {
@@ -162,12 +164,14 @@ void Object::Render() const {
     } else {
       Rectangle rect = {0, 0, width * scale, height * scale};
       Vector2 origin = {(width * scale) / 2, (height * scale) / 2};
-      
+
       if (hasTexture) {
         // Draw rotated texture
-        Rectangle dest = {position.x, position.y, width * scale, height * scale};
+        Rectangle dest = {position.x, position.y, width * scale,
+                          height * scale};
         Rectangle source = {0, 0, (float)texture.width, (float)texture.height};
-        Fumbo::Graphic2D::DrawTexturePro(texture, source, dest, origin, rotation, WHITE);
+        Fumbo::Graphic2D::DrawTexturePro(texture, source, dest, origin,
+                                         rotation, WHITE);
       } else if (isOutline) {
         Fumbo::Graphic2D::DrawRectanglePro(rect, origin, rotation, BLANK);
         // Draw outline manually with lines
@@ -188,7 +192,8 @@ void Object::Render() const {
 
   case ShapeType::Circle: {
     if (isOutline) {
-      Fumbo::Graphic2D::DrawCircleLines(position.x, position.y, radius * scale, color);
+      Fumbo::Graphic2D::DrawCircleLines(position.x, position.y, radius * scale,
+                                        color);
     } else {
       Fumbo::Graphic2D::DrawCircleV(position, radius * scale, color);
     }
@@ -199,9 +204,11 @@ void Object::Render() const {
     if (vertices.size() >= 3) {
       auto worldVerts = GetVertices();
       if (isOutline) {
-        Fumbo::Graphic2D::DrawTriangleLines(worldVerts[0], worldVerts[1], worldVerts[2], color);
+        Fumbo::Graphic2D::DrawTriangleLines(worldVerts[0], worldVerts[1],
+                                            worldVerts[2], color);
       } else {
-        Fumbo::Graphic2D::DrawTriangle(worldVerts[0], worldVerts[1], worldVerts[2], color);
+        Fumbo::Graphic2D::DrawTriangle(worldVerts[0], worldVerts[1],
+                                       worldVerts[2], color);
       }
     }
     break;
@@ -219,7 +226,8 @@ void Object::Render() const {
       } else {
         // Draw filled polygon using triangle fan
         for (size_t i = 1; i < worldVerts.size() - 1; i++) {
-          Fumbo::Graphic2D::DrawTriangle(worldVerts[0], worldVerts[i], worldVerts[i + 1], color);
+          Fumbo::Graphic2D::DrawTriangle(worldVerts[0], worldVerts[i],
+                                         worldVerts[i + 1], color);
         }
       }
     }
@@ -242,7 +250,8 @@ void Object::DrawDebug() const {
     Rectangle bounds = Collision::GetBoundingBox(verts);
     Fumbo::Graphic2D::DrawRectangleLinesEx(bounds, 1.0f, YELLOW);
   } else if (shapeType == ShapeType::Circle) {
-    Fumbo::Graphic2D::DrawCircleLines(position.x, position.y, radius * scale, YELLOW);
+    Fumbo::Graphic2D::DrawCircleLines(position.x, position.y, radius * scale,
+                                      YELLOW);
   }
 
   // Draw velocity vector
@@ -256,20 +265,22 @@ void Object::DrawDebug() const {
   Fumbo::Graphic2D::DrawCircleV(position, 3.0f, RED);
 
   // Draw body type text
-  const char *typeText =
-      (bodyType == BodyType::Static) ? "STATIC" : "DYNAMIC";
-  Fumbo::Graphic2D::DrawText(typeText, {(int)(position.x - 20), (int)(position.y - 30)}, {}, 10,
-           (bodyType == BodyType::Static) ? ORANGE : LIME);
+  const char *typeText = (bodyType == BodyType::Static) ? "STATIC" : "DYNAMIC";
+  Fumbo::Graphic2D::DrawText(typeText, {(position.x - 20), (position.y - 30)},
+                             {}, 10,
+                             (bodyType == BodyType::Static) ? ORANGE : LIME);
 }
 
 void Object::UpdateVertices() {
   // This is called internally to update polygon/triangle transforms
-  // The actual transformation is done in GetVe  DrawCircleLines((int)position.x, (int)position.y, 5, RED);
+  // The actual transformation is done in GetVe  DrawCircleLines(position.x,
+  // position.y, 5, RED);
 }
 
-bool Object::IsCollidingWith(const Object* other) const {
-  if (!other) return false;
-  
+bool Object::IsCollidingWith(const Object *other) const {
+  if (!other)
+    return false;
+
   // Check collision regardless of collidable status
   // This allows detecting triggers and non-collidable objects
   auto contact = Collision::CheckCollision(this, other);
