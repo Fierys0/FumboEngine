@@ -1,6 +1,5 @@
 #pragma once
-#include "../../2d/object.hpp"
-#include "../../2d/physics.hpp"
+#include "../../fumbo.hpp"
 #include "raylib.h"
 
 namespace Fumbo {

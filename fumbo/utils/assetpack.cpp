@@ -1,5 +1,5 @@
-#include "assetpack.hpp"
-#include "crypto.hpp"
+#include "../../fumbo.hpp"
+#include "../../tools/crypto.hpp"
 #include "raylib.h"
 
 namespace Fumbo {

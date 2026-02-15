@@ -2,10 +2,8 @@
 // Fumbo Top-Down Extension
 // Include this for top-down game helpers (Stardew Valley, Zelda style)
 
-#include "../2d/object.hpp"
-#include "../2d/physics.hpp"
+#include "../fumbo.hpp"
 #include "character_controller.hpp" // For ObjectConfig
-#include "raylib.h"
 #include "topdown/topdown_controller.hpp"
 
 namespace Fumbo {

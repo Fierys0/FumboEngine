@@ -6,8 +6,8 @@
 #include <vector>
 
 // Include the encryption utilities
-#include "../engine/fumbo/utils/assetpack.hpp"
-#include "../engine/fumbo/utils/crypto.hpp"
+#include "../fumbo.hpp"
+#include "crypto.hpp"
 
 bool verbose = false;
 

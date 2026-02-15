@@ -1,7 +1,4 @@
-#include "visualn.hpp"
-
-#include "../utils/utils.hpp"
-#include "../2d/graphics.hpp"
+#include "../../fumbo.hpp"
 
 namespace Fumbo {
   namespace UI {

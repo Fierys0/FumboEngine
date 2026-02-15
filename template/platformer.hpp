@@ -2,11 +2,9 @@
 // Fumbo Platformer Extension
 // Include this for platformer-specific helpers and controllers
 
-#include "../2d/object.hpp"
-#include "../2d/physics.hpp"
+#include "../fumbo.hpp"
 #include "character_controller.hpp" // For ObjectConfig
 #include "platformer/platformer_controller.hpp"
-#include "raylib.h"
 
 namespace Fumbo {
 namespace Platformer {

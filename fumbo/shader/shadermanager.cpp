@@ -1,4 +1,4 @@
-#include "shadermanager.hpp"
+#include "../../fumbo.hpp"
 
 namespace Fumbo {
 

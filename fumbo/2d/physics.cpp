@@ -1,4 +1,4 @@
-#include "physics.hpp"
+#include "../../fumbo.hpp"
 #include "raymath.h"
 #include <algorithm>
 #include <cmath>
@@ -345,8 +345,8 @@ void Physics::DrawDebug() const {
   Vector2 gravDir = Vector2Normalize(gravity);
   Vector2 gravStart = {50, 50};
   Vector2 gravEnd = Vector2Add(gravStart, Vector2Scale(gravDir, 30));
-  DrawLineEx(gravStart, gravEnd, 3.0f, MAGENTA);
-  DrawText("GRAVITY", 60, 45, 10, MAGENTA);
+  ::DrawLineEx(gravStart, gravEnd, 3.0f, MAGENTA);
+  ::DrawText("GRAVITY", 60, 45, 10, MAGENTA);
 }
 
 } // namespace Graphic2D

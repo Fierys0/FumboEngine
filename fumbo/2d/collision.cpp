@@ -1,5 +1,4 @@
-#include "collision.hpp"
-#include "object.hpp"
+#include "../../fumbo.hpp"
 #include "raymath.h"
 #include <algorithm>
 #include <cmath>

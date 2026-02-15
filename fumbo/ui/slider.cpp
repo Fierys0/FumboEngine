@@ -1,5 +1,4 @@
-#include "slider.hpp"
-#include "../2d/graphics.hpp"
+#include "../../fumbo.hpp"
 #include <algorithm> // for clamp
 
 namespace Fumbo {

@@ -1,5 +1,4 @@
-#include "object.hpp"
-#include "graphics.hpp"
+#include "../../fumbo.hpp"
 #include "raymath.h"
 #include <cmath>
 

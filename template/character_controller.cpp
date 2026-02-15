@@ -1,5 +1,4 @@
 #include "character_controller.hpp"
-#include "../2d/physics.hpp"
 #include <cmath>
 
 namespace Fumbo {

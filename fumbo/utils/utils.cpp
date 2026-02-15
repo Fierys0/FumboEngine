@@ -1,5 +1,4 @@
-#include "utils.hpp"
-#include "fumbo/2d/graphics.hpp"
+#include "../../fumbo.hpp"
 #include "raylib.h"
 #include "raymath.h"
 #include <algorithm> // For std::clamp
