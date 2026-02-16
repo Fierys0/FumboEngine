@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.16)
 file(GLOB_RECURSE ENGINE_SOURCES *.cpp)
 # Remove example files, tool files, and build artifacts from engine sources
 list(FILTER ENGINE_SOURCES EXCLUDE REGEX ".*/examples/.*")
@@ -5,6 +6,7 @@ list(FILTER ENGINE_SOURCES EXCLUDE REGEX ".*/tools/.*")
 list(FILTER ENGINE_SOURCES EXCLUDE REGEX ".*/build/.*")
 # Ensure assetpack.cpp is included
 list(APPEND ENGINE_SOURCES fumbo/utils/assetpack.cpp)
+add_subdirectory(lib/raylib)
 
 add_library(fumbo_engine SHARED ${ENGINE_SOURCES})
 
