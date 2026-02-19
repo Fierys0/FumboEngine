@@ -754,6 +754,7 @@ public:
 
   Button() = default;
 
+  Button(Color buttonColor, Sound hoverSound = {}, Sound clickSound = {});
   Button(Texture2D texture, Sound hoverSound = {}, Sound clickSound = {});
 
   void Draw();
@@ -781,6 +782,9 @@ public:
   bool IsPressed() const;
   bool IsReleased() const;
   bool IsHover() const;
+  void SetButtonSound(Sound clickSound, Sound hoverSound = {});
+  void SetButtonColor(Color color);
+  void SetTexture(Texture2D texture);
 
 private:
   void Update(Camera2D *camera = nullptr);
@@ -790,6 +794,7 @@ private:
   Font font{};
   int baseFontSize{};
   Color m_textColor = BLACK;
+  Color buttonColor = WHITE;
 
   Sound hoverSound{};
   Sound clickSound{};

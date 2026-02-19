@@ -1,4 +1,5 @@
 #include "../../fumbo.hpp"
+#include "raylib.h"
 
 using namespace Fumbo::UI;
 
@@ -39,6 +40,10 @@ Button &Button::operator=(Button &&other) noexcept {
   return *this;
 }
 
+Button::Button(Color buttonColor, Sound hoverSound, Sound clickSound)
+    : buttonColor(buttonColor), hoverSound(hoverSound), clickSound(clickSound) {
+}
+
 Button::Button(Texture2D texture, Sound hoverSound, Sound clickSound)
     : texture(texture), hoverSound(hoverSound), clickSound(clickSound) {}
 
@@ -46,7 +51,7 @@ void Button::Update(Camera2D *camera) {
   // Reset per-frame states
   m_isPressed = false;
   m_isReleased = false;
-  
+
   Rectangle screenBounds;
   if (m_worldSpace) {
     screenBounds = uiBounds; // No scaling for world space
@@ -57,12 +62,13 @@ void Button::Update(Camera2D *camera) {
   this->Position = Vector2{screenBounds.x, screenBounds.y};
   Vector2 mouse = GetMousePosition();
 
-  // If a camera is provided (or stored), transform the mouse position to world space
+  // If a camera is provided (or stored), transform the mouse position to world
+  // space
   if (camera || m_camera) {
-    Camera2D* cam = camera ? camera : m_camera;
+    Camera2D *cam = camera ? camera : m_camera;
     mouse = GetScreenToWorld2D(mouse, *cam);
   }
-  
+
   bool isHovered = CheckCollisionPointRec(mouse, screenBounds);
 
   if (!m_interactable) {
@@ -87,11 +93,11 @@ void Button::Update(Camera2D *camera) {
     m_isPressed = true;
     PlaySound(clickSound);
   }
-  
+
   if (hovered && IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
     m_isReleased = true;
   }
-  
+
   m_lastUpdateTime = GetTime(); // Mark as updated this frame
 }
 
@@ -142,11 +148,11 @@ void Button::TextOffsetXY(float offsetX, float offsetY) {
 void Button::Draw() {
   Rectangle screenBounds;
   if (m_worldSpace) {
-      screenBounds = uiBounds;
+    screenBounds = uiBounds;
   } else {
-      screenBounds = Fumbo::Utils::UISpaceToScreen(uiBounds);
+    screenBounds = Fumbo::Utils::UISpaceToScreen(uiBounds);
   }
-  
+
   int width = (int)screenBounds.width;
   int height = (int)screenBounds.height;
 
@@ -175,6 +181,12 @@ void Button::Draw() {
     Color tint = hovered ? m_hoveredColor : m_idleColor;
     if (!m_interactable)
       tint = m_disabledColor;
+
+    if (!IsTextureValid(texture)) {
+      Image img = GenImageColor(width, height, buttonColor);
+      texture = LoadTextureFromImage(img);
+      UnloadImage(img);
+    }
     DrawTexturePro(texture,
                    Rectangle{0, 0, (float)texture.width, (float)texture.height},
                    Rectangle{0, 0, (float)width, (float)height}, Vector2{0, 0},
@@ -239,15 +251,13 @@ void Button::Draw() {
   // 3. Draw Cache to Screen
   if (m_cacheTexture.id != 0) {
     Rectangle sourceRect = {0.0f, 0.0f, (float)m_cacheTexture.texture.width,
-                        -(float)m_cacheTexture.texture.height};
+                            -(float)m_cacheTexture.texture.height};
     DrawTextureRec(m_cacheTexture.texture, sourceRect,
                    Vector2{screenBounds.x, screenBounds.y}, WHITE);
   }
 } // Button::Draw()
 
-void Button::SetBounds(Rectangle bounds) {
-  this->uiBounds = bounds;
-}
+void Button::SetBounds(Rectangle bounds) { this->uiBounds = bounds; }
 
 void Button::SetBounds(float x, float y, float w, float h) {
   this->uiBounds = {x, y, w, h};
@@ -257,7 +267,7 @@ bool Button::IsPressed() const {
   // Auto-update if not updated this frame
   double currentTime = GetTime();
   if (currentTime != m_lastUpdateTime) {
-    const_cast<Button*>(this)->Update(m_camera);
+    const_cast<Button *>(this)->Update(m_camera);
   }
   return m_isPressed;
 }
@@ -265,7 +275,7 @@ bool Button::IsPressed() const {
 bool Button::IsReleased() const {
   double currentTime = GetTime();
   if (currentTime != m_lastUpdateTime) {
-    const_cast<Button*>(this)->Update(m_camera);
+    const_cast<Button *>(this)->Update(m_camera);
   }
   return m_isReleased;
 }
@@ -273,7 +283,19 @@ bool Button::IsReleased() const {
 bool Button::IsHover() const {
   double currentTime = GetTime();
   if (currentTime != m_lastUpdateTime) {
-    const_cast<Button*>(this)->Update(m_camera);
+    const_cast<Button *>(this)->Update(m_camera);
   }
   return hovered;
+}
+
+void Button::SetButtonSound(Sound clickSound, Sound hoverSound) {
+  this->clickSound = clickSound;
+  this->hoverSound = hoverSound;
+}
+
+void Button::SetButtonColor(Color color) { this->buttonColor = color; }
+
+void Button::SetTexture(Texture2D texture) {
+  m_isDirty = true;
+  this->texture = texture;
 }
