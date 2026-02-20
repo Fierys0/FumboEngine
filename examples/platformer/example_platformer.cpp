@@ -343,7 +343,7 @@ void PlatformerExample::DrawDirty() {
         (Vector2){0, 0}, 0.0f, WHITE);
   } else if (renderMode == RenderMode::MASK) {
     // Mask rendering - white background with black objects
-    Texture2D sceneMask = Fumbo::Utils::DrawMask(
+    Texture2D sceneMask = Fumbo::Shaders::DrawMask(
         currentScreen, maskRenderTarget, maskShader, WHITE, BLACK);
     DrawTexturePro(
         sceneMask,
@@ -353,12 +353,12 @@ void PlatformerExample::DrawDirty() {
   } else if (renderMode == RenderMode::GODRAYS) {
     // God rays rendering - apply radial blur to mask
     Texture2D sceneMask =
-        Fumbo::Utils::DrawMask(currentScreen, maskRenderTarget, maskShader,
-                               {255, 255, 255, 120}, BLACK);
+        Fumbo::Shaders::DrawMask(currentScreen, maskRenderTarget, maskShader,
+                                 {255, 255, 255, 120}, BLACK);
 
     Vector2 blurCenter = {(float)GetScreenWidth() / 2.0f,
                           (float)GetScreenHeight() / 2.0f};
-    Texture2D godRays = Fumbo::Utils::ApplyRadialBlur(
+    Texture2D godRays = Fumbo::Shaders::ApplyRadialBlur(
         sceneMask, blurRenderTarget, blurShader, 0.5f, {100, 600});
 
     DrawTexturePro(

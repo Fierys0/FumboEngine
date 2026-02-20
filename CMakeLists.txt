@@ -6,6 +6,9 @@ list(FILTER ENGINE_SOURCES EXCLUDE REGEX ".*/tools/.*")
 list(FILTER ENGINE_SOURCES EXCLUDE REGEX ".*/build/.*")
 # Ensure assetpack.cpp is included
 list(APPEND ENGINE_SOURCES fumbo/utils/assetpack.cpp)
+if(WIN32)
+  add_subdirectory(lib/raylib)
+endif()
 
 add_library(fumbo_engine SHARED ${ENGINE_SOURCES})
 
