@@ -40,12 +40,8 @@ Button &Button::operator=(Button &&other) noexcept {
   return *this;
 }
 
-Button::Button(Color buttonColor, Sound hoverSound, Sound clickSound)
-    : buttonColor(buttonColor), hoverSound(hoverSound), clickSound(clickSound) {
-}
-
-Button::Button(Texture2D texture, Sound hoverSound, Sound clickSound)
-    : texture(texture), hoverSound(hoverSound), clickSound(clickSound) {}
+Button::Button(Rectangle uiBounds, Color buttonColor, Texture2D texture)
+    : uiBounds(uiBounds), buttonColor(buttonColor), texture(texture) {}
 
 void Button::Update(Camera2D *camera) {
   // Reset per-frame states

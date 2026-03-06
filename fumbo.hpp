@@ -754,8 +754,7 @@ public:
 
   Button() = default;
 
-  Button(Color buttonColor, Sound hoverSound = {}, Sound clickSound = {});
-  Button(Texture2D texture, Sound hoverSound = {}, Sound clickSound = {});
+  Button(Rectangle uiBounds, Color buttonColor = WHITE, Texture2D texture = {});
 
   void Draw();
 
@@ -785,6 +784,10 @@ public:
   void SetButtonSound(Sound clickSound, Sound hoverSound = {});
   void SetButtonColor(Color color);
   void SetTexture(Texture2D texture);
+  void AddSound(Sound clickSound = {}, Sound hoverSound = {}) {
+    this->clickSound = clickSound;
+    this->hoverSound = hoverSound;
+  };
 
 private:
   void Update(Camera2D *camera = nullptr);
