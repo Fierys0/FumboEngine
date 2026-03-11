@@ -160,8 +160,10 @@ void Fumbo::Engine::DrawFPS(int x, int y, Font font, int fontSize,
 }
 
 void Fumbo::Engine::SetFumboIcon() {
+#ifndef PLATFORM_ANDROID
   Image icon =
       LoadImageFromMemory(".ico", engine_fumbo_ico, engine_fumbo_ico_len);
   SetWindowIcon(icon);
   UnloadImage(icon);
+#endif
 }

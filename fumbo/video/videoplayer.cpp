@@ -1,3 +1,4 @@
+#ifndef PLATFORM_ANDROID
 #include "../../fumbo.hpp"
 
 #include <cstring>
@@ -34,12 +35,11 @@ bool VideoPlayer::Init() {
 }
 
 bool VideoPlayer::Play(const char* path, bool skippable) {
-  // Videos are not encrypted - load directly from file
   if (!FileExists(path)) {
     TraceLog(LOG_WARNING, "[VideoPlayer] Video not found: %s", path);
     return false;
   }
-  
+
   const char* cmd[] = {"loadfile", path, nullptr};
   if (mpv_command(mpv, cmd) < 0) {
     TraceLog(LOG_ERROR, "[VideoPlayer] loadfile failed");
@@ -67,7 +67,6 @@ bool VideoPlayer::Play(const char* path, bool skippable) {
     if (!frameBuffer) {
       width = (int)w;
       height = (int)h;
-
       frameBuffer = new unsigned char[width * height * 4];
       texture = LoadTextureFromImage(GenImageColor(width, height, WHITE));
     }
@@ -82,11 +81,10 @@ bool VideoPlayer::Play(const char* path, bool skippable) {
                                         {MPV_RENDER_PARAM_INVALID, nullptr}};
 
     mpv_render_context_render(ctx, render_params);
-
     UpdateTexture(texture, frameBuffer);
 
     BeginDrawing();
-    ClearBackground(BLACK);  // Better for video
+    ClearBackground(BLACK);
     DrawTexturePro(texture, {0, 0, (float)width, (float)height},
                    {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()}, {0, 0}, 0, WHITE);
     EndDrawing();
@@ -97,11 +95,8 @@ bool VideoPlayer::Play(const char* path, bool skippable) {
 
 void VideoPlayer::Shutdown() {
   if (ctx) mpv_render_context_free(ctx);
-
   if (mpv) mpv_terminate_destroy(mpv);
-
   if (texture.id) UnloadTexture(texture);
-
   if (frameBuffer) {
     delete[] frameBuffer;
     frameBuffer = nullptr;
@@ -110,3 +105,4 @@ void VideoPlayer::Shutdown() {
 
 }  // namespace Video
 }  // namespace Fumbo
+#endif // PLATFORM_ANDROID
