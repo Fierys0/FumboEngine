@@ -1130,6 +1130,7 @@ public:
   // Global Overlay System
   using OverlayCallback = std::function<void()>;
   void AddGlobalOverlay(OverlayCallback cb);
+  std::string GetAppDir() { return AppDir; };
 
 private:
   Engine() = default;
@@ -1150,6 +1151,7 @@ private:
   void Update();
   void Draw();
   static void SetFumboIcon();
+  std::string AppDir = "";
 };
 
 // Convenience helper to avoid breaking changes in user code

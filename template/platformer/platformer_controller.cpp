@@ -21,12 +21,14 @@ void PlatformerController::Update(bool moveLeft, bool moveRight, bool jump) {
   float maxImpulse = moveForce * currentControl * deltaTime;
 
   if (moveLeft) {
+      facingDirection = -1;
       if (velocity.x > -moveSpeed) {
           float needed = -moveSpeed - velocity.x;
           float impulse = std::max(needed, -maxImpulse);
           object->ApplyImpulse({impulse, 0});
       }
   } else if (moveRight) {
+      facingDirection = 1;
       if (velocity.x < moveSpeed) {
           float needed = moveSpeed - velocity.x;
           float impulse = std::min(needed, maxImpulse);

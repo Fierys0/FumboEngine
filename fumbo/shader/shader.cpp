@@ -1,6 +1,52 @@
 #include "../../fumbo.hpp"
 #include "raylib.h"
 
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+const char *solidShader = R"(
+#version 100
+precision mediump float;
+varying vec2 fragTexCoord;
+uniform sampler2D texture0;
+uniform vec4 solidColor; // The global color you want to apply
+
+void main()
+{
+    // Get the alpha value from the texture
+    float alpha = texture2D(texture0, fragTexCoord).a;
+    
+    // Replace RGB with solidColor, keep original texture Alpha
+    gl_FragColor = vec4(solidColor.rgb, solidColor.a * alpha);
+}
+)";
+
+const char *radialBlurShader = R"(
+#version 100
+precision mediump float;
+varying vec2 fragTexCoord;
+uniform sampler2D texture0;
+uniform vec2 center;        // Center of blur (0.0 to 1.0)
+uniform float blurStrength; // How strong the blur is
+
+void main()
+{
+    vec4 color = vec4(0.0);
+    vec2 dir = fragTexCoord - center;
+    float dist = length(dir);
+    dir = normalize(dir);
+    
+    // Sample along the ray from center
+    const int samples = 32; // More samples = smoother but slower
+    for (int i = 0; i < 32; i++)
+    {
+        float offset = (float(i) / float(samples)) * blurStrength;
+        vec2 samplePos = fragTexCoord - dir * offset;
+        color += texture2D(texture0, samplePos);
+    }
+    
+    gl_FragColor = color / float(samples);
+}
+)";
+#else
 const char *solidShader = R"(
 #version 330
 in vec2 fragTexCoord;
@@ -16,33 +62,35 @@ void main()
     // Replace RGB with solidColor, keep original texture Alpha
     finalColor = vec4(solidColor.rgb, solidColor.a * alpha);
 }
-  )";
+)";
 
-const char *radialBlurShader =
-    "#version 330\n"
-    "in vec2 fragTexCoord;\n"
-    "uniform sampler2D texture0;\n"
-    "uniform vec2 center;\n"        // Center of blur (0.0 to 1.0)
-    "uniform float blurStrength;\n" // How strong the blur is
-    "out vec4 finalColor;\n"
-    "void main()\n"
-    "{\n"
-    "    vec4 color = vec4(0.0);\n"
-    "    vec2 dir = fragTexCoord - center;\n" // Direction from center
-    "    float dist = length(dir);\n"
-    "    dir = normalize(dir);\n"
-    "    \n"
-    "    // Sample along the ray from center\n"
-    "    int samples = 32;\n" // More samples = smoother but slower
-    "    for (int i = 0; i < samples; i++)\n"
-    "    {\n"
-    "        float offset = (float(i) / float(samples)) * blurStrength;\n"
-    "        vec2 samplePos = fragTexCoord - dir * offset;\n"
-    "        color += texture(texture0, samplePos);\n"
-    "    }\n"
-    "    \n"
-    "    finalColor = color / float(samples);\n"
-    "}\n";
+const char *radialBlurShader = R"(
+#version 330
+in vec2 fragTexCoord;
+uniform sampler2D texture0;
+uniform vec2 center;        // Center of blur (0.0 to 1.0)
+uniform float blurStrength; // How strong the blur is
+out vec4 finalColor;
+void main()
+{
+    vec4 color = vec4(0.0);
+    vec2 dir = fragTexCoord - center;
+    float dist = length(dir);
+    dir = normalize(dir);
+    
+    // Sample along the ray from center
+    int samples = 32; // More samples = smoother but slower
+    for (int i = 0; i < samples; i++)
+    {
+        float offset = (float(i) / float(samples)) * blurStrength;
+        vec2 samplePos = fragTexCoord - dir * offset;
+        color += texture(texture0, samplePos);
+    }
+    
+    finalColor = color / float(samples);
+}
+)";
+#endif
 
 namespace Fumbo::Shaders {
 void MakeSolidColor(Texture2D texture, Color color) {

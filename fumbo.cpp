@@ -6,7 +6,13 @@
 
 void Fumbo::Engine::Init(int width, int height, const std::string &title,
                          double targetFPS) {
+#ifndef PLATFORM_ANDROID
   InitWindow(width, height, title.c_str());
+  AppDir = std::string(GetApplicationDirectory());
+#else
+  InitWindow(0, 0, title.c_str());
+#endif
+
   InitAudioDevice();
   SetFumboIcon();
   LimitFPS(targetFPS);

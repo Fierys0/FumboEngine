@@ -2,6 +2,53 @@
 
 namespace Fumbo {
 
+#if defined(PLATFORM_ANDROID) || defined(PLATFORM_WEB)
+const char* blurShaderCode = R"(
+#version 100
+precision mediump float;
+
+varying vec2 fragTexCoord;
+varying vec4 fragColor;
+
+uniform sampler2D texture0;
+
+uniform float renderWidth;
+uniform float renderHeight;
+uniform float radius;
+
+void main()
+{
+    if (radius <= 0.0) 
+    {
+        gl_FragColor = texture2D(texture0, fragTexCoord) * fragColor;
+        return;
+    }
+
+    vec4 sum = vec4(0.0);
+    int count = 0;
+    
+    // In WebGL/GLES 100, loops require constant bounds
+    const int MAX_BLUR = 8;
+    int blurSize = int(radius);
+    if (blurSize > MAX_BLUR) blurSize = MAX_BLUR;
+
+    for (int x = -MAX_BLUR; x <= MAX_BLUR; ++x)
+    {
+        if (x < -blurSize) continue;
+        if (x > blurSize) break;
+        for (int y = -MAX_BLUR; y <= MAX_BLUR; ++y)
+        {
+            if (y < -blurSize) continue;
+            if (y > blurSize) break;
+            sum += texture2D(texture0, fragTexCoord + vec2(float(x), float(y)) / vec2(renderWidth, renderHeight));
+            count++;
+        }
+    }
+
+    gl_FragColor = (sum / float(count)) * fragColor;
+}
+)";
+#else
 const char* blurShaderCode = R"(
 #version 330
 
@@ -41,6 +88,7 @@ void main()
     finalColor = (sum / float(count)) * fragColor;
 }
 )";
+#endif
 
 void ShaderManager::Init(int width, int height) {
   blurShader = LoadShaderFromMemory(nullptr, blurShaderCode);
