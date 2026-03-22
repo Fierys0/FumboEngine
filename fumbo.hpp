@@ -8,8 +8,12 @@
 #include <functional>
 #include <map>
 #include <memory>
+#ifndef PLATFORM_ANDROID
 #include <mpv/client.h>
 #include <mpv/render_gl.h>
+#else
+#include "raymob.h"
+#endif
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -1010,6 +1014,7 @@ Image CheckedImage();
 } // namespace Fumbo
 
 // Fumbo Video
+#ifndef PLATFORM_ANDROID
 namespace Fumbo {
 namespace Video {
 
@@ -1031,6 +1036,7 @@ private:
 
 } // namespace Video
 } // namespace Fumbo
+#endif // PLATFORM_ANDROID
 
 // === Fumbo Shader Manager
 namespace Fumbo {
@@ -1124,6 +1130,7 @@ public:
   // Global Overlay System
   using OverlayCallback = std::function<void()>;
   void AddGlobalOverlay(OverlayCallback cb);
+  std::string GetAppDir() { return AppDir; };
 
 private:
   Engine() = default;
@@ -1144,6 +1151,7 @@ private:
   void Update();
   void Draw();
   static void SetFumboIcon();
+  std::string AppDir = "";
 };
 
 // Convenience helper to avoid breaking changes in user code

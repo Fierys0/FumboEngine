@@ -20,6 +20,7 @@ public:
 
   // Utility
   bool IsGrounded() const;
+  int GetFacingDirection() const { return facingDirection; }
 
 private:
   Graphic2D::Object *object;
@@ -29,6 +30,7 @@ private:
   float jumpForce = 600.0f;
   float airControl = 1.0f;
   float groundedThreshold = 50.0f;
+  int facingDirection = 1; // 1 for right, -1 for left
 
   void ClampVelocityX();
 };
