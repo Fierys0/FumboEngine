@@ -1104,6 +1104,10 @@ public:
   void Run(std::shared_ptr<IGameState> initialState);
   void Cleanup();
   void Quit();
+  void SharedState(std::shared_ptr<IGameState> sharedState);
+  void UnloadSharedState() { this->sharedState = nullptr; }
+  void PauseSharedState(bool pause) { sharedStatePaused = pause; }
+  std::shared_ptr<IGameState> GetSharedState() { return sharedState; }
 
   // State Management
   void ChangeState(std::shared_ptr<IGameState> newState);
@@ -1143,6 +1147,7 @@ private:
   std::shared_ptr<IGameState> nextState;
   bool stateChangePending = false;
   std::vector<OverlayCallback> m_globalOverlays;
+  std::shared_ptr<IGameState> sharedState = nullptr;
 
   // Clean Layer Caching
   RenderTexture2D m_cleanTexture = {0};
@@ -1152,6 +1157,8 @@ private:
   void Draw();
   static void SetFumboIcon();
   std::string AppDir = "";
+  bool sharedStateRun = false;
+  bool sharedStatePaused = false;
 };
 
 // Convenience helper to avoid breaking changes in user code

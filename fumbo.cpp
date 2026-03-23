@@ -2,6 +2,7 @@
 #include "fumbo_icon.h"
 #include "raylib.h"
 #include <fstream>
+#include <memory>
 #include <sstream>
 
 void Fumbo::Engine::Init(int width, int height, const std::string &title,
@@ -54,10 +55,19 @@ void Fumbo::Engine::ChangeState(std::shared_ptr<IGameState> newState) {
   stateChangePending = true;
 }
 
+void Fumbo::Engine::SharedState(std::shared_ptr<IGameState> state) {
+  this->sharedState = state;
+  this->sharedStateRun = false;
+}
+
 void Fumbo::Engine::Run(std::shared_ptr<IGameState> initialState) {
   ChangeState(initialState);
 
   while (!WindowShouldClose() && running) {
+    if (!sharedStateRun && sharedState) {
+      sharedState->Init();
+      sharedStateRun = true;
+    }
     Update();
     Draw();
   }
@@ -79,6 +89,10 @@ void Fumbo::Engine::Update() {
   // Engine Systems Update
   GetAudioManager().Update();
   // Physics is updated per-state/area, not globally
+
+  if (sharedState && !sharedStatePaused) {
+    sharedState->Update();
+  }
 
   if (currentState) {
     currentState->Update();
@@ -105,7 +119,7 @@ void Fumbo::Engine::Draw() {
   }
 
   if (currentState) {
-    // 1. Update Clean Layer Cache if needed
+    // Update Clean Layer Cache if needed
     if (m_cleanIsInvalid) {
       BeginTextureMode(m_cleanTexture);
       ClearBackground(RAYWHITE);
@@ -115,7 +129,7 @@ void Fumbo::Engine::Draw() {
       m_cleanIsInvalid = false;
     }
 
-    // 2. Draw Final Frame
+    // Draw Final Frame
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
@@ -133,11 +147,20 @@ void Fumbo::Engine::Draw() {
       overlay();
     }
 
+    if (sharedState && !sharedStatePaused) {
+      sharedState->DrawDirty();
+    }
+
     EndDrawing();
   } else {
     // Fallback if no state
     BeginDrawing();
     ClearBackground(BLUE);
+    
+    if (sharedState && !sharedStatePaused) {
+      sharedState->DrawDirty();
+    }
+    
     EndDrawing();
   }
 }
