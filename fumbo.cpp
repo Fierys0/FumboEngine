@@ -17,7 +17,7 @@ void Fumbo::Engine::Init(int width, int height, const std::string &title,
   InitAudioDevice();
   SetFumboIcon();
   LimitFPS(targetFPS);
-  SetExitKey(0);
+  SetExitKey(KEY_NULL);
 
   // Initialize Shaders
   GetShaderManager().Init(width, height);
@@ -156,11 +156,11 @@ void Fumbo::Engine::Draw() {
     // Fallback if no state
     BeginDrawing();
     ClearBackground(BLUE);
-    
+
     if (sharedState && !sharedStatePaused) {
       sharedState->DrawDirty();
     }
-    
+
     EndDrawing();
   }
 }

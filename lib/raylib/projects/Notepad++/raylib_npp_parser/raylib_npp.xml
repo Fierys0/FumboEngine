@@ -65,7 +65,7 @@
             <Overload retVal="void" descr="Set window state: minimized, if resizable"></Overload>
         </KeyWord>
         <KeyWord name="RestoreWindow" func="yes">
-            <Overload retVal="void" descr="Set window state: not minimized/maximized"></Overload>
+            <Overload retVal="void" descr="Restore window from being minimized/maximized"></Overload>
         </KeyWord>
         <KeyWord name="SetWindowIcon" func="yes">
             <Overload retVal="void" descr="Set icon for window (single image, RGBA 32bit)">
@@ -2960,24 +2960,6 @@
                 <Param name="Color tint" />
             </Overload>
         </KeyWord>
-        <KeyWord name="DrawModelPoints" func="yes">
-            <Overload retVal="void" descr="Draw a model as points">
-                <Param name="Model model" />
-                <Param name="Vector3 position" />
-                <Param name="float scale" />
-                <Param name="Color tint" />
-            </Overload>
-        </KeyWord>
-        <KeyWord name="DrawModelPointsEx" func="yes">
-            <Overload retVal="void" descr="Draw a model as points with extended parameters">
-                <Param name="Model model" />
-                <Param name="Vector3 position" />
-                <Param name="Vector3 rotationAxis" />
-                <Param name="float rotationAngle" />
-                <Param name="Vector3 scale" />
-                <Param name="Color tint" />
-            </Overload>
-        </KeyWord>
         <KeyWord name="DrawBoundingBox" func="yes">
             <Overload retVal="void" descr="Draw bounding box (wires)">
                 <Param name="BoundingBox box" />
@@ -3013,7 +2995,7 @@
                 <Param name="Vector2 size" />
                 <Param name="Vector2 origin" />
                 <Param name="float rotation" />
-                <Param name="°ñ_)% " />
+                <Param name="ï¿½ï¿½_)% " />
             </Overload>
         </KeyWord>
 
@@ -3634,7 +3616,7 @@
         </KeyWord>
 
         <KeyWord name="AttachAudioStreamProcessor" func="yes">
-            <Overload retVal="void" descr="Attach audio stream processor to stream, receives the samples as 'float'">
+            <Overload retVal="void" descr="Attach audio stream processor to stream, receives frames x 2 samples as 'float' (stereo)">
                 <Param name="AudioStream stream" />
                 <Param name="AudioCallback processor" />
             </Overload>
@@ -3647,7 +3629,7 @@
         </KeyWord>
 
         <KeyWord name="AttachAudioMixedProcessor" func="yes">
-            <Overload retVal="void" descr="Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'">
+            <Overload retVal="void" descr="Attach audio stream processor to the entire audio pipeline, receives frames x 2 samples as 'float' (stereo)">
                 <Param name="AudioCallback processor" />
             </Overload>
         </KeyWord>
