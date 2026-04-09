@@ -494,6 +494,29 @@ struct SliderConfig {
   Texture2D knobTexture = {0};
 };
 
+struct TextboxConfig {
+  // Styles
+  Color backgroundColor = WHITE;
+  Color outlineColor = DARKGRAY;
+  Color focusedOutlineColor = SKYBLUE;
+  Color textColor = BLACK;
+  Color cursorColor = BLACK;
+  Color selectionColor = {100, 150, 255, 128}; // Translucent blue
+
+  float outlineThickness = 2.0f;
+  float cornerRoundness = 0.0f; // 0 for strict rectangle
+  int cornerSegments = 10;
+
+  // Text alignment in single-line mode
+  TextAlign textAlignment = TextAlign::LEFT;
+
+  // Padding
+  Vector2 padding = {5.0f, 5.0f};
+
+  // Optional styling Textures
+  Texture2D backgroundTexture = {0};
+};
+
 } // namespace UI
 } // namespace Fumbo
 
@@ -855,6 +878,77 @@ private:
   SliderConfig m_config;
 };
 
+class Textbox {
+public:
+  Textbox() = default;
+  Textbox(Rectangle bounds, Font font, int fontSize);
+
+  void Update();
+  void Draw();
+
+  // Setters
+  void SetStyle(const TextboxConfig &config);
+  void SetBounds(Rectangle bounds);
+  void SetText(const std::string &text);
+  void SetFont(Font font, int fontSize);
+  void SetMultiline(bool multiline);
+  void SetMaxLines(int maxLines);
+  void SetMaxLength(int maxLength);
+  void SetInteractable(bool interactable);
+  void SetFocused(bool focused);
+  void SetWorldSpace(bool worldSpace);
+
+  // Direct Style Setters
+  void SetBackgroundTexture(Texture2D texture);
+  void SetBackgroundColor(Color color);
+  void SetOutlineColor(Color color, Color focusedColor = SKYBLUE);
+  void SetTextColor(Color color);
+  void SetSelectionColor(Color color);
+  void SetPadding(Vector2 padding);
+
+  // Getters
+  std::string GetText() const;
+  bool IsFocused() const;
+  Rectangle GetBounds() const;
+
+private:
+  Rectangle m_bounds = {0, 0, 100, 30};
+  std::string m_text = "";
+
+  Font m_font = {0};
+  int m_fontSize = 20;
+
+  TextboxConfig m_config;
+
+  bool m_multiline = false;
+  int m_maxLength = 0; // 0 means no limit
+  int m_maxLines = 0;  // 0 means no limit
+
+  bool m_focused = false;
+  bool m_interactable = true;
+  bool m_worldSpace = false;
+  Camera2D *m_camera = nullptr;
+
+  // Cursor handling
+  float m_cursorTimer = 0.0f;
+  bool m_cursorVisible = false;
+  int m_cursorPos = 0;
+
+  // Selection & Mouse Dragging
+  int m_selectStart = -1;
+  int m_selectLength = 0;
+  bool m_isDragging = false;
+
+  // Scrolling for single-line text that overflows bounds
+  float m_scrollOffset = 0.0f;
+
+  void HandleInput();
+  int GetCursorIndexFromMouse(Vector2 mousePos, Vector2 textBasePos,
+                              float scaleY);
+  void DeleteSelection();
+  void InsertTextAtCursor(const std::string &inserted);
+};
+
 // === FUMBO VN
 
 class VisualNovel {
@@ -987,9 +1081,6 @@ void Camera2DFollow(Camera2D *camera, Rectangle targetRect, float offsetx = 0,
                     float offsety = 0, float smoothness = 0.0f);
 void Camera2DFollow(Camera2D *camera, Vector2 targetCenter, float offsetx = 0,
                     float offsety = 0, float smoothness = 0.0f);
-namespace Internal {
-void GameSettings();
-}
 } // namespace Utils
 } // namespace Fumbo
 

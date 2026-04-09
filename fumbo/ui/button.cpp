@@ -68,18 +68,13 @@ void Button::Update(Camera2D *camera) {
   bool isHovered = CheckCollisionPointRec(mouse, screenBounds);
 
   if (!m_interactable) {
-    if (hovered) {
-      hovered = false;
-      m_isDirty = true;
-    }
+    hovered = false; // Tint applied at blit time, no FBO redraw
     return;
   }
 
   if (isHovered != hovered) {
     hovered = isHovered;
-    m_isDirty = true; // State changed, redraw
-
-    // Play hover sound once when mouse enters
+    // Hover tint is applied at blit time — no FBO redraw needed
     if (isHovered) {
       PlaySound(hoverSound);
     }
@@ -98,10 +93,8 @@ void Button::Update(Camera2D *camera) {
 }
 
 void Button::SetInteractable(bool interactable) {
-  if (m_interactable != interactable) {
-    m_interactable = interactable;
-    m_isDirty = true;
-  }
+  // Disabled tint applied at blit time, FBO redraw not needed
+  m_interactable = interactable;
 }
 
 void Button::SetWorldSpace(bool worldSpace) {
@@ -165,35 +158,31 @@ void Button::Draw() {
     }
   }
 
-  // 2. Update Cache if Dirty
+  // Generate fallback texture BEFORE BeginTextureMode to avoid mid-frame GPU stall
+  if (!IsTextureValid(texture)) {
+    Image img = GenImageColor(width, height, buttonColor);
+    texture = LoadTextureFromImage(img);
+    UnloadImage(img);
+    m_isDirty = true;
+  }
+
+  // 2. Update Cache if Dirty (structure/content only — hover tint handled at blit)
   if (m_isDirty && m_cacheTexture.id != 0) {
     BeginTextureMode(m_cacheTexture);
     ClearBackground(BLANK);
 
-    // Draw visuals relative to (0,0) of the texture
-    // Re-calculate local bounds
-
-    // Draw Button Texture Scaled to fit
-    Color tint = hovered ? m_hoveredColor : m_idleColor;
-    if (!m_interactable)
-      tint = m_disabledColor;
-
-    if (!IsTextureValid(texture)) {
-      Image img = GenImageColor(width, height, buttonColor);
-      texture = LoadTextureFromImage(img);
-      UnloadImage(img);
-    }
+    // Bake base appearance at WHITE — hover/disabled tint applied cheaply at blit time
     DrawTexturePro(texture,
                    Rectangle{0, 0, (float)texture.width, (float)texture.height},
                    Rectangle{0, 0, (float)width, (float)height}, Vector2{0, 0},
-                   0.0f, tint);
+                   0.0f, WHITE);
 
     // Draw text
     if (!text.empty()) {
       Vector2 scale = Fumbo::Utils::GetUIScale();
       float fontSize = baseFontSize * scale.y;
 
-      float xPadding = 10.0f * scale.x; // Scale padding too
+      float xPadding = 10.0f * scale.x;
       float yPadding = 10.0f * scale.y;
 
       Vector2 textSize = MeasureTextEx(font, text.c_str(), fontSize, 1);
@@ -244,19 +233,27 @@ void Button::Draw() {
     m_isDirty = false;
   }
 
-  // 3. Draw Cache to Screen
+  // 3. Blit Cache to Screen — apply hover/disabled tint here, zero FBO cost
   if (m_cacheTexture.id != 0) {
     Rectangle sourceRect = {0.0f, 0.0f, (float)m_cacheTexture.texture.width,
                             -(float)m_cacheTexture.texture.height};
+    Color blitTint = m_interactable ? (hovered ? m_hoveredColor : m_idleColor)
+                                    : m_disabledColor;
     DrawTextureRec(m_cacheTexture.texture, sourceRect,
-                   Vector2{screenBounds.x, screenBounds.y}, WHITE);
+                   Vector2{screenBounds.x, screenBounds.y}, blitTint);
   }
 } // Button::Draw()
 
-void Button::SetBounds(Rectangle bounds) { this->uiBounds = bounds; }
+void Button::SetBounds(Rectangle bounds) {
+  // Guard: skip if nothing changed to avoid triggering unnecessary size checks
+  if (uiBounds.x == bounds.x && uiBounds.y == bounds.y &&
+      uiBounds.width == bounds.width && uiBounds.height == bounds.height)
+    return;
+  uiBounds = bounds;
+}
 
 void Button::SetBounds(float x, float y, float w, float h) {
-  this->uiBounds = {x, y, w, h};
+  SetBounds({x, y, w, h});
 }
 
 bool Button::IsPressed() const {
