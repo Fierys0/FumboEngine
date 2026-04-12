@@ -19,6 +19,17 @@ void main()
 }
 )";
 
+// Particle flow shader stub for mobile (not implemented)
+const char *particleFlowShader = R"(
+#version 100
+precision mediump float;
+varying vec2 fragTexCoord;
+void main()
+{
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+}
+)";
+
 const char *radialBlurShader = R"(
 #version 100
 precision mediump float;
@@ -88,6 +99,92 @@ void main()
     }
     
     finalColor = color / float(samples);
+}
+)";
+
+// ===== Particle Trail Shader (Desktop) =====
+// Optimised stochastic mouse trail: magenta → purple → blue pointillist particles.
+// Per-pixel hash (no cell grid = zero cutting artifacts). 32-point trail max.
+const char *particleFlowShader = R"(
+#version 330
+in vec2 fragTexCoord;
+out vec4 finalColor;
+
+uniform float uTime;
+uniform vec2  uResolution;
+uniform vec2  uTrail[32];   // trail positions in normalised UV (0..1, Y-down)
+uniform int   uTrailCount;  // number of active trail points
+
+// Fast ALU hash — no trig
+float hash21(vec2 p) {
+    p = fract(p * vec2(443.897, 441.423));
+    p += dot(p, p.yx + 19.19);
+    return fract((p.x + p.y) * p.x);
+}
+
+// Magenta → purple → blue
+vec3 palette(float t) {
+    t = clamp(t, 0.0, 1.0);
+    vec3 a = vec3(0.90, 0.20, 0.60);
+    vec3 b = vec3(0.55, 0.12, 0.85);
+    vec3 c = vec3(0.18, 0.25, 0.92);
+    return t < 0.5 ? mix(a, b, t * 2.0) : mix(b, c, (t - 0.5) * 2.0);
+}
+
+void main()
+{
+    // gl_FragCoord gives real pixel coords (fragTexCoord is invalid for DrawRectangle)
+    // Flip Y: OpenGL is bottom-up, Raylib mouse/screen is top-down
+    vec2 uv = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y) / uResolution;
+    float aspect = uResolution.x / uResolution.y;
+    vec2 pos = vec2(uv.x * aspect, uv.y);
+
+    float minDist = 1e6;
+    float bestAge = 1.0;
+    int count = min(uTrailCount, 32);
+
+    // --- Closest distance to trail polyline (31 segments max) ---
+    for (int i = 0; i < 31; i++) {
+        if (i >= count - 1) break;
+        vec2 a  = vec2(uTrail[i].x * aspect, uTrail[i].y);
+        vec2 b  = vec2(uTrail[i + 1].x * aspect, uTrail[i + 1].y);
+        vec2 ab = b - a;
+        float len2 = dot(ab, ab);
+        float t = len2 > 1e-8 ? clamp(dot(pos - a, ab) / len2, 0.0, 1.0) : 0.0;
+        float d = length(pos - (a + t * ab));
+        if (d < minDist) {
+            minDist = d;
+            bestAge = (float(i) + t) / float(max(count - 1, 1));
+        }
+    }
+
+    // --- Per-pixel stochastic noise (no grid cells = no clipping) ---
+    float noise = hash21(floor(uv * uResolution));
+
+    // Trail width: tight at head, hair-thin at tail
+    float trailW = mix(0.018, 0.002, bestAge);
+    float mask   = smoothstep(trailW, 0.0, minDist);
+
+    // Density: thick near head, sparse at tail
+    float thresh = mix(0.20, 0.82, bestAge);
+    float particle = step(thresh, noise);
+
+    vec3 color = palette(bestAge) * mask * particle;
+
+    // --- Subtle core glow along trail ---
+    float gw   = mix(0.007, 0.001, bestAge);
+    float glow = exp(-minDist * minDist / (gw * gw)) * 0.10;
+    color += palette(bestAge) * glow * (1.0 - bestAge * 0.6);
+
+    // --- Compact head glow ---
+    if (count > 0) {
+        vec2  head = vec2(uTrail[0].x * aspect, uTrail[0].y);
+        float hd   = length(pos - head);
+        color += vec3(0.95, 0.50, 0.78) * exp(-hd * hd * 3000.0) * 0.7;
+        color += vec3(0.50, 0.15, 0.60) * exp(-hd * hd * 600.0)  * 0.25;
+    }
+
+    finalColor = vec4(color, 1.0);
 }
 )";
 #endif
