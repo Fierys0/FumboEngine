@@ -803,6 +803,9 @@ public:
   void TextOffsetXY(float offsetX, float offsetY);
 
   Vector2 Position;
+  void Roundness(float value) { m_roundness = value; }
+  void Segments(int segments) { m_segments = segments; }
+  void LineThickness(float thickness) { m_thickness = thickness; }
   void SetInteractable(bool interactable);
   void SetWorldSpace(bool worldSpace);
   bool IsPressed() const;
@@ -817,6 +820,9 @@ public:
   };
 
 private:
+  int m_segments = 2;
+  float m_roundness = 0;
+  float m_thickness = 1.0f;
   void Update(Camera2D *camera = nullptr);
   Rectangle uiBounds{};
   Texture2D texture{};

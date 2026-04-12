@@ -158,24 +158,23 @@ void Button::Draw() {
     }
   }
 
-  // Generate fallback texture BEFORE BeginTextureMode to avoid mid-frame GPU stall
-  if (!IsTextureValid(texture)) {
-    Image img = GenImageColor(width, height, buttonColor);
-    texture = LoadTextureFromImage(img);
-    UnloadImage(img);
-    m_isDirty = true;
-  }
-
-  // 2. Update Cache if Dirty (structure/content only — hover tint handled at blit)
+  // 2. Update Cache if Dirty (structure/content only — hover tint handled at
+  // blit)
   if (m_isDirty && m_cacheTexture.id != 0) {
     BeginTextureMode(m_cacheTexture);
     ClearBackground(BLANK);
 
-    // Bake base appearance at WHITE — hover/disabled tint applied cheaply at blit time
-    DrawTexturePro(texture,
-                   Rectangle{0, 0, (float)texture.width, (float)texture.height},
-                   Rectangle{0, 0, (float)width, (float)height}, Vector2{0, 0},
-                   0.0f, WHITE);
+    if (IsTextureValid(texture)) {
+      // Bake base appearance at WHITE — hover/disabled tint applied cheaply at
+      // blit time
+      DrawTexturePro(
+          texture, Rectangle{0, 0, (float)texture.width, (float)texture.height},
+          Rectangle{0, 0, (float)width, (float)height}, Vector2{0, 0}, 0.0f,
+          WHITE);
+    } else {
+      DrawRectangleRounded(Rectangle{1, 1, (float)width - 2, (float)height - 2},
+                           m_roundness, m_segments, buttonColor);
+    }
 
     // Draw text
     if (!text.empty()) {
