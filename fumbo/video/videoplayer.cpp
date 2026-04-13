@@ -21,8 +21,9 @@ bool VideoPlayer::Init() {
     return false;
   }
 
-  mpv_render_param params[] = {{MPV_RENDER_PARAM_API_TYPE, (void*)MPV_RENDER_API_TYPE_SW},
-                               {MPV_RENDER_PARAM_INVALID, nullptr}};
+  mpv_render_param params[] = {
+      {MPV_RENDER_PARAM_API_TYPE, (void *)MPV_RENDER_API_TYPE_SW},
+      {MPV_RENDER_PARAM_INVALID, nullptr}};
 
   int res = mpv_render_context_create(&ctx, mpv, params);
   if (res < 0) {
@@ -34,13 +35,13 @@ bool VideoPlayer::Init() {
   return true;
 }
 
-bool VideoPlayer::Play(const char* path, bool skippable) {
+bool VideoPlayer::Play(const char *path, bool skippable) {
   if (!FileExists(path)) {
     TraceLog(LOG_WARNING, "[VideoPlayer] Video not found: %s", path);
     return false;
   }
 
-  const char* cmd[] = {"loadfile", path, nullptr};
+  const char *cmd[] = {"loadfile", path, nullptr};
   if (mpv_command(mpv, cmd) < 0) {
     TraceLog(LOG_ERROR, "[VideoPlayer] loadfile failed");
     return false;
@@ -49,20 +50,23 @@ bool VideoPlayer::Play(const char* path, bool skippable) {
   bool playing = true;
 
   while (playing && !WindowShouldClose()) {
-    if (skippable && (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON))) {
-      const char* stop[] = {"stop", nullptr};
+    if (skippable &&
+        (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON))) {
+      const char *stop[] = {"stop", nullptr};
       mpv_command(mpv, stop);
       break;
     }
 
-    mpv_event* ev = mpv_wait_event(mpv, 0);
-    if (ev && ev->event_id == MPV_EVENT_END_FILE) break;
+    mpv_event *ev = mpv_wait_event(mpv, 0);
+    if (ev && ev->event_id == MPV_EVENT_END_FILE)
+      break;
 
     int64_t w = 0, h = 0;
     mpv_get_property(mpv, "width", MPV_FORMAT_INT64, &w);
     mpv_get_property(mpv, "height", MPV_FORMAT_INT64, &h);
 
-    if (w <= 0 || h <= 0) continue;
+    if (w <= 0 || h <= 0)
+      continue;
 
     if (!frameBuffer) {
       width = (int)w;
@@ -74,11 +78,12 @@ bool VideoPlayer::Play(const char* path, bool skippable) {
     int size[2] = {width, height};
     int stride = width * 4;
 
-    mpv_render_param render_params[] = {{MPV_RENDER_PARAM_SW_SIZE, size},
-                                        {MPV_RENDER_PARAM_SW_FORMAT, (void*)"rgba"},
-                                        {MPV_RENDER_PARAM_SW_STRIDE, &stride},
-                                        {MPV_RENDER_PARAM_SW_POINTER, frameBuffer},
-                                        {MPV_RENDER_PARAM_INVALID, nullptr}};
+    mpv_render_param render_params[] = {
+        {MPV_RENDER_PARAM_SW_SIZE, size},
+        {MPV_RENDER_PARAM_SW_FORMAT, (void *)"rgba"},
+        {MPV_RENDER_PARAM_SW_STRIDE, &stride},
+        {MPV_RENDER_PARAM_SW_POINTER, frameBuffer},
+        {MPV_RENDER_PARAM_INVALID, nullptr}};
 
     mpv_render_context_render(ctx, render_params);
     UpdateTexture(texture, frameBuffer);
@@ -86,7 +91,8 @@ bool VideoPlayer::Play(const char* path, bool skippable) {
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(texture, {0, 0, (float)width, (float)height},
-                   {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()}, {0, 0}, 0, WHITE);
+                   {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
+                   {0, 0}, 0, WHITE);
     EndDrawing();
   }
 
@@ -94,15 +100,18 @@ bool VideoPlayer::Play(const char* path, bool skippable) {
 }
 
 void VideoPlayer::Shutdown() {
-  if (ctx) mpv_render_context_free(ctx);
-  if (mpv) mpv_terminate_destroy(mpv);
-  if (texture.id) UnloadTexture(texture);
+  if (ctx)
+    mpv_render_context_free(ctx);
+  if (mpv)
+    mpv_terminate_destroy(mpv);
+  if (texture.id)
+    UnloadTexture(texture);
   if (frameBuffer) {
     delete[] frameBuffer;
     frameBuffer = nullptr;
   }
 }
 
-}  // namespace Video
-}  // namespace Fumbo
+} // namespace Video
+} // namespace Fumbo
 #endif // PLATFORM_ANDROID

@@ -28,6 +28,24 @@ Button &Button::operator=(Button &&other) noexcept {
     verticalAlign = other.verticalAlign;
     hovered = other.hovered;
 
+    // Move missing fields
+    m_segments = other.m_segments;
+    m_roundness = other.m_roundness;
+    m_thickness = other.m_thickness;
+    m_textColor = other.m_textColor;
+    buttonColor = other.buttonColor;
+    m_hoveredColor = other.m_hoveredColor;
+    m_idleColor = other.m_idleColor;
+    m_disabledColor = other.m_disabledColor;
+    m_textOffsetX = other.m_textOffsetX;
+    m_textOffsetY = other.m_textOffsetY;
+    m_interactable = other.m_interactable;
+    m_camera = other.m_camera;
+    m_worldSpace = other.m_worldSpace;
+    m_isPressed = other.m_isPressed;
+    m_isReleased = other.m_isReleased;
+    m_lastUpdateTime = other.m_lastUpdateTime;
+
     // Move resource
     m_cacheTexture = other.m_cacheTexture;
     m_isDirty = other.m_isDirty;
@@ -36,6 +54,7 @@ Button &Button::operator=(Button &&other) noexcept {
 
     // Reset other
     other.m_cacheTexture = {0};
+    other.m_lastUpdateTime = -1.0;
   }
   return *this;
 }
@@ -110,6 +129,11 @@ void Button::AddText(const std::string &text, Font font, int fontSize,
   this->font = font;
   this->baseFontSize = fontSize;
   m_textColor = color;
+  m_isDirty = true;
+}
+
+void Button::AddText(const std::string &text, Color color) {
+  AddText(text, this->font, this->baseFontSize, color);
   m_isDirty = true;
 }
 
@@ -227,19 +251,23 @@ void Button::Draw() {
     }
 
     EndTextureMode();
-    if (m_camera)
-      BeginMode2D(*m_camera);
     m_isDirty = false;
   }
 
   // 3. Blit Cache to Screen — apply hover/disabled tint here, zero FBO cost
   if (m_cacheTexture.id != 0) {
+    if (m_worldSpace && m_camera)
+      BeginMode2D(*m_camera);
+
     Rectangle sourceRect = {0.0f, 0.0f, (float)m_cacheTexture.texture.width,
                             -(float)m_cacheTexture.texture.height};
     Color blitTint = m_interactable ? (hovered ? m_hoveredColor : m_idleColor)
                                     : m_disabledColor;
     DrawTextureRec(m_cacheTexture.texture, sourceRect,
                    Vector2{screenBounds.x, screenBounds.y}, blitTint);
+
+    if (m_worldSpace && m_camera)
+      EndMode2D();
   }
 } // Button::Draw()
 
@@ -258,7 +286,7 @@ void Button::SetBounds(float x, float y, float w, float h) {
 bool Button::IsPressed() const {
   // Auto-update if not updated this frame
   double currentTime = GetTime();
-  if (currentTime != m_lastUpdateTime) {
+  if (std::abs(currentTime - m_lastUpdateTime) > 0.001) {
     const_cast<Button *>(this)->Update(m_camera);
   }
   return m_isPressed;
@@ -266,7 +294,7 @@ bool Button::IsPressed() const {
 
 bool Button::IsReleased() const {
   double currentTime = GetTime();
-  if (currentTime != m_lastUpdateTime) {
+  if (std::abs(currentTime - m_lastUpdateTime) > 0.001) {
     const_cast<Button *>(this)->Update(m_camera);
   }
   return m_isReleased;
@@ -274,7 +302,7 @@ bool Button::IsReleased() const {
 
 bool Button::IsHover() const {
   double currentTime = GetTime();
-  if (currentTime != m_lastUpdateTime) {
+  if (std::abs(currentTime - m_lastUpdateTime) > 0.001) {
     const_cast<Button *>(this)->Update(m_camera);
   }
   return hovered;
@@ -285,9 +313,24 @@ void Button::SetButtonSound(Sound clickSound, Sound hoverSound) {
   this->hoverSound = hoverSound;
 }
 
-void Button::SetButtonColor(Color color) { this->buttonColor = color; }
+void Button::SetButtonColor(Color color) {
+  this->buttonColor = color;
+  m_isDirty = true;
+}
 
 void Button::SetTexture(Texture2D texture) {
   m_isDirty = true;
   this->texture = texture;
+}
+
+void Button::ApplyStyle(const ButtonStyle &style) {
+  this->font = style.font;
+  this->baseFontSize = style.fontsize;
+  this->m_idleColor = style.idleColor;
+  this->m_hoveredColor = style.hoveredColor;
+  this->m_disabledColor = style.DisabledColor;
+  this->texture = style.texture;
+  this->m_roundness = style.roundness;
+  this->m_segments = (int)style.segments;
+  this->m_isDirty = true;
 }

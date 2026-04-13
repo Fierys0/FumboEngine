@@ -14,7 +14,8 @@ Physics::Physics()
 // Object Management
 
 void Physics::AddObject(Object *object) {
-  if (object && std::find(objects.begin(), objects.end(), object) == objects.end()) {
+  if (object &&
+      std::find(objects.begin(), objects.end(), object) == objects.end()) {
     objects.push_back(object);
   }
 }
@@ -81,10 +82,11 @@ void Physics::ResolveCollisions() {
         continue;
       }
 
-      // Broadphase: Quick AABB overlap check before expensive collision detection
+      // Broadphase: Quick AABB overlap check before expensive collision
+      // detection
       Rectangle aabbA = objectA->GetAABB();
       Rectangle aabbB = objectB->GetAABB();
-      
+
       if (!CheckCollisionRecs(aabbA, aabbB)) {
         continue; // No AABB overlap, skip expensive narrow-phase check
       }
@@ -107,9 +109,10 @@ void Physics::ResolveCollisions() {
 }
 
 void Physics::ResolveCollision(Object *objectA, Object *objectB,
-                                const CollisionContact &contact) {
+                               const CollisionContact &contact) {
   // Calculate relative velocity
-  Vector2 relativeVelocity = Vector2Subtract(objectB->GetVelocity(), objectA->GetVelocity());
+  Vector2 relativeVelocity =
+      Vector2Subtract(objectB->GetVelocity(), objectA->GetVelocity());
   float velAlongNormal = Vector2DotProduct(relativeVelocity, contact.normal);
 
   // Don't resolve if objects are separating
@@ -117,7 +120,8 @@ void Physics::ResolveCollision(Object *objectA, Object *objectB,
     return;
 
   // Calculate restitution (bounciness)
-  float restitution = fminf(objectA->GetRestitution(), objectB->GetRestitution());
+  float restitution =
+      fminf(objectA->GetRestitution(), objectB->GetRestitution());
 
   // Calculate impulse scalar
   float impulseScalar = -(1.0f + restitution) * velAlongNormal;
@@ -151,8 +155,8 @@ void Physics::ResolveCollision(Object *objectA, Object *objectB,
   Vector2 correction = Vector2Scale(contact.normal, correctionAmount);
 
   if (!aIsStatic) {
-    Vector2 newPos =
-        Vector2Subtract(objectA->GetPosition(), Vector2Scale(correction, invMassA));
+    Vector2 newPos = Vector2Subtract(objectA->GetPosition(),
+                                     Vector2Scale(correction, invMassA));
     objectA->SetPosition(newPos);
   }
   if (!bIsStatic) {
@@ -162,8 +166,8 @@ void Physics::ResolveCollision(Object *objectA, Object *objectB,
   }
 
   // Apply friction
-  Vector2 tangent =
-      Vector2Subtract(relativeVelocity, Vector2Scale(contact.normal, velAlongNormal));
+  Vector2 tangent = Vector2Subtract(
+      relativeVelocity, Vector2Scale(contact.normal, velAlongNormal));
   float tangentLength = Vector2Length(tangent);
 
   if (tangentLength > 0.0001f) {
@@ -195,7 +199,8 @@ RaycastHit Physics::Raycast(Vector2 origin, Vector2 direction,
   result.object = nullptr;
 
   Vector2 directionNormalized = Vector2Normalize(direction);
-  Vector2 rayEnd = Vector2Add(origin, Vector2Scale(directionNormalized, maxDistance));
+  Vector2 rayEnd =
+      Vector2Add(origin, Vector2Scale(directionNormalized, maxDistance));
 
   for (auto *object : objects) {
     // Simple raycast using line-shape intersection
@@ -209,7 +214,8 @@ RaycastHit Physics::Raycast(Vector2 origin, Vector2 direction,
       if (projection < 0)
         continue; // Behind ray
 
-      Vector2 closest = Vector2Add(origin, Vector2Scale(directionNormalized, projection));
+      Vector2 closest =
+          Vector2Add(origin, Vector2Scale(directionNormalized, projection));
       float distToCenter = Vector2Distance(closest, object->GetPosition());
 
       if (distToCenter <= object->GetRadius()) {
@@ -221,7 +227,8 @@ RaycastHit Physics::Raycast(Vector2 origin, Vector2 direction,
           result.hit = true;
           result.distance = hitDist;
           result.object = object;
-          result.point = Vector2Add(origin, Vector2Scale(directionNormalized, hitDist));
+          result.point =
+              Vector2Add(origin, Vector2Scale(directionNormalized, hitDist));
           result.normal = Vector2Normalize(
               Vector2Subtract(result.point, object->GetPosition()));
         }
@@ -261,7 +268,8 @@ std::vector<RaycastHit> Physics::RaycastAll(Vector2 origin, Vector2 direction,
   std::vector<RaycastHit> hits;
 
   Vector2 directionNormalized = Vector2Normalize(direction);
-  Vector2 rayEnd = Vector2Add(origin, Vector2Scale(directionNormalized, maxDistance));
+  Vector2 rayEnd =
+      Vector2Add(origin, Vector2Scale(directionNormalized, maxDistance));
 
   for (auto *object : objects) {
     RaycastHit tempResult;
@@ -275,7 +283,8 @@ std::vector<RaycastHit> Physics::RaycastAll(Vector2 origin, Vector2 direction,
       float projection = Vector2DotProduct(toCircle, directionNormalized);
 
       if (projection >= 0) {
-        Vector2 closest = Vector2Add(origin, Vector2Scale(directionNormalized, projection));
+        Vector2 closest =
+            Vector2Add(origin, Vector2Scale(directionNormalized, projection));
         float distToCenter = Vector2Distance(closest, object->GetPosition());
 
         if (distToCenter <= object->GetRadius()) {
@@ -287,7 +296,8 @@ std::vector<RaycastHit> Physics::RaycastAll(Vector2 origin, Vector2 direction,
             tempResult.hit = true;
             tempResult.distance = hitDist;
             tempResult.object = object;
-            tempResult.point = Vector2Add(origin, Vector2Scale(directionNormalized, hitDist));
+            tempResult.point =
+                Vector2Add(origin, Vector2Scale(directionNormalized, hitDist));
             tempResult.normal = Vector2Normalize(
                 Vector2Subtract(tempResult.point, object->GetPosition()));
           }

@@ -26,9 +26,9 @@ CollisionContact CheckCollision(const Object *a, const Object *b) {
 
   // Rectangle vs Rectangle
   if (typeA == ShapeType::Rectangle && typeB == ShapeType::Rectangle) {
-    return RectangleVsRectangle(a->GetPosition(), a->GetWidth(), a->GetHeight(),
-                                a->GetRotation(), b->GetPosition(),
-                                b->GetWidth(), b->GetHeight(), b->GetRotation());
+    return RectangleVsRectangle(
+        a->GetPosition(), a->GetWidth(), a->GetHeight(), a->GetRotation(),
+        b->GetPosition(), b->GetWidth(), b->GetHeight(), b->GetRotation());
   }
 
   // Circle vs Circle
@@ -40,14 +40,15 @@ CollisionContact CheckCollision(const Object *a, const Object *b) {
   // Rectangle vs Circle
   if (typeA == ShapeType::Rectangle && typeB == ShapeType::Circle) {
     return RectangleVsCircle(a->GetPosition(), a->GetWidth(), a->GetHeight(),
-                             a->GetRotation(), b->GetPosition(), b->GetRadius());
+                             a->GetRotation(), b->GetPosition(),
+                             b->GetRadius());
   }
 
   // Circle vs Rectangle (swap)
   if (typeA == ShapeType::Circle && typeB == ShapeType::Rectangle) {
-    contact = RectangleVsCircle(b->GetPosition(), b->GetWidth(), b->GetHeight(),
-                                b->GetRotation(), a->GetPosition(),
-                                a->GetRadius());
+    contact =
+        RectangleVsCircle(b->GetPosition(), b->GetWidth(), b->GetHeight(),
+                          b->GetRotation(), a->GetPosition(), a->GetRadius());
     contact.normal = Vector2Scale(contact.normal, -1.0f); // Flip normal
     return contact;
   }
@@ -67,7 +68,8 @@ CollisionContact CheckCollision(const Object *a, const Object *b) {
   // Circle vs Polygon (swap)
   if (typeA == ShapeType::Circle &&
       (typeB == ShapeType::Polygon || typeB == ShapeType::Triangle)) {
-    contact = PolygonVsCircle(b->GetVertices(), a->GetPosition(), a->GetRadius());
+    contact =
+        PolygonVsCircle(b->GetVertices(), a->GetPosition(), a->GetRadius());
     contact.normal = Vector2Scale(contact.normal, -1.0f);
     return contact;
   }
@@ -383,7 +385,7 @@ Rectangle GetBoundingBox(const std::vector<Vector2> &vertices) {
 
 // Helper: Line intersection test
 bool LineIntersection(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4,
-                     Vector2 *intersection) {
+                      Vector2 *intersection) {
   float dx1 = p2.x - p1.x;
   float dy1 = p2.y - p1.y;
   float dx2 = p4.x - p3.x;
