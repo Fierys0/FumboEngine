@@ -1,6 +1,8 @@
 #pragma once
 #include "fumbo/physics.hpp"
+#ifdef FUMBO_VIDEO_SUPPORT
 #include "fumbo/video.hpp"
+#endif
 #include "raylib.h"
 #include "raymath.h"
 #include <algorithm>

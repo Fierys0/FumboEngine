@@ -11,7 +11,14 @@ endif()
 
 message(STATUS "[fumbo_engine] Building for platform: ${PLATFORM}")
 
+option(FUMBO_WITH_VIDEO "Enable video support (requires MPV)" OFF)
+
 file(GLOB_RECURSE ENGINE_SOURCES *.cpp)
+# Remove video files if support is disabled
+if(NOT FUMBO_WITH_VIDEO)
+    list(FILTER ENGINE_SOURCES EXCLUDE REGEX ".*fumbo/video/.*")
+endif()
+
 # Remove example files, tool files, build artifacts, and third-party libs
 list(FILTER ENGINE_SOURCES EXCLUDE REGEX ".*/examples/.*")
 list(FILTER ENGINE_SOURCES EXCLUDE REGEX ".*/tools/.*")
@@ -49,6 +56,10 @@ target_include_directories(fumbo_engine
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+if(FUMBO_WITH_VIDEO)
+    target_compile_definitions(fumbo_engine PUBLIC FUMBO_VIDEO_SUPPORT)
+endif()
+
 # ===== Link libraries (platform-specific) =====
 if(PLATFORM STREQUAL "Android")
     set(RAYMOB_DEPS ${CMAKE_CURRENT_SOURCE_DIR}/lib/raymob/app/src/main/cpp/deps)
@@ -64,7 +75,7 @@ else()
 endif()
 
 # ===== MPV integration (Desktop only — MPV is not available on Android) =====
-if(NOT PLATFORM STREQUAL "Android")
+if(FUMBO_WITH_VIDEO AND NOT PLATFORM STREQUAL "Android")
     if(WIN32)
         message(STATUS "[fumbo_engine] Using bundled mpv (Windows)")
         set(MPV_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/lib/windows/mpv)
