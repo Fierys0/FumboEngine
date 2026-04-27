@@ -10,36 +10,48 @@ namespace Fumbo {
     }
 
     void AudioManager::Update() {
-      if (currentMusic.active) {
-        if (musics.find(currentMusic.id) != musics.end()) {
-          ::Music& m = musics[currentMusic.id];
-          UpdateMusicStream(m);
+      for (auto it = activeMusics.begin(); it != activeMusics.end(); ) {
+        MusicState& state = it->second;
+        if (state.active) {
+          if (musics.find(state.id) != musics.end()) {
+            ::Music& m = musics[state.id];
+            UpdateMusicStream(m);
 
-          // Handle Fading
-          if (currentMusic.fadingOut) {
-            currentMusic.fadeTimer += GetFrameTime();
-            float t = currentMusic.fadeTimer / currentMusic.fadeDuration;
-            if (t >= 1.0f) {
-              StopMusic(currentMusic.id);  // Done
-              return;
+            // Handle Fading
+            if (state.fadingOut) {
+              state.fadeTimer += GetFrameTime();
+              float t = state.fadeTimer / state.fadeDuration;
+              if (t >= 1.0f) {
+                ::StopMusicStream(m);
+                it = activeMusics.erase(it);
+                continue;
+              } else {
+                // Lerp volume down
+                float vol = state.startVol * (1.0f - t);
+                ::SetMusicVolume(m, vol * masterVol);
+              }
             } else {
-              // Lerp volume down
-              float vol = currentMusic.startVol * (1.0f - t);
-              ::SetMusicVolume(m, vol * masterVol);
-            }
-          }
+              if (state.loop) {
+                float len = GetMusicTimeLength(m);
+                float pos = GetMusicTimePlayed(m);
 
-          if (currentMusic.loop && !currentMusic.fadingOut) {
-            float len = GetMusicTimeLength(m);
-            float pos = GetMusicTimePlayed(m);
-
-            if (pos >= len - 0.05f)
-            {
-              float seekPos = (currentMusic.loopStart < 0.0f) ? 0.0f : currentMusic.loopStart;
-              SeekMusicStream(m, seekPos);
+                if (pos >= len - 0.05f)
+                {
+                  float seekPos = (state.loopStart < 0.0f) ? 0.0f : state.loopStart;
+                  SeekMusicStream(m, seekPos);
+                }
+              }
             }
+          } else {
+            // Music resource no longer exists, but state is active?
+            it = activeMusics.erase(it);
+            continue;
           }
+        } else {
+           it = activeMusics.erase(it);
+           continue;
         }
+        ++it;
       }
     }
 
@@ -116,14 +128,15 @@ namespace Fumbo {
       }
     }
 
-    void AudioManager::PlaySound(const std::string& id) {
+    void AudioManager::PlaySound(const std::string& id, int channel) {
       if (sounds.find(id) != sounds.end()) {
         ::Sound& s = sounds[id];
-        ::SetSoundVolume(s, soundVol * masterVol);
+        float cVol = GetChannelVolume(channel);
+        ::SetSoundVolume(s, cVol * masterVol);
         ::PlaySound(s);
       } else {
         if (LoadAudio(id, id, AudioType::SOUND)) {
-          PlaySound(id);
+          PlaySound(id, channel);
         }
       }
     }
@@ -134,10 +147,10 @@ namespace Fumbo {
       }
     }
 
-    void AudioManager::PlayMusic(const std::string& id, bool loop, float loopStart) {
-      // Stop current if any (Basic single channel music)
-      if (currentMusic.active && currentMusic.id != id) {
-        StopMusic(currentMusic.id);
+    void AudioManager::PlayMusic(const std::string& id, int channel, bool loop, float loopStart) {
+      // Stop current music on this channel if any
+      if (activeMusics.find(channel) != activeMusics.end()) {
+        StopMusic(channel);
       }
 
       if (musics.find(id) == musics.end()) {
@@ -145,46 +158,74 @@ namespace Fumbo {
       }
 
       ::Music& m = musics[id];
-      ::SetMusicVolume(m, musicVol * masterVol);
+      float cVol = GetChannelVolume(channel);
+      ::SetMusicVolume(m, cVol * masterVol);
       ::PlayMusicStream(m);
 
-      currentMusic.id = id;
-      currentMusic.loop = loop;
-      currentMusic.loopStart = loopStart;
-      currentMusic.active = true;
-      currentMusic.fadingOut = false;
-      currentMusic.fadeTimer = 0.0f;
-      currentMusic.startVol = musicVol;  // Current settings music vol
+      MusicState state;
+      state.id = id;
+      state.loop = loop;
+      state.loopStart = loopStart;
+      state.active = true;
+      state.fadingOut = false;
+      state.fadeTimer = 0.0f;
+      state.startVol = cVol;
+
+      activeMusics[channel] = state;
     }
 
-    void AudioManager::StopMusic(const std::string& id) {
-      if (musics.find(id) != musics.end()) {
-        ::StopMusicStream(musics[id]);
-      }
-      if (currentMusic.id == id) {
-        currentMusic.active = false;
-        currentMusic.fadingOut = false;
+    void AudioManager::StopMusic(int channel) {
+      if (activeMusics.find(channel) != activeMusics.end()) {
+        std::string id = activeMusics[channel].id;
+        if (musics.find(id) != musics.end()) {
+          ::StopMusicStream(musics[id]);
+        }
+        activeMusics.erase(channel);
       }
     }
 
-    void AudioManager::StopMusicFade(float duration) {
-      if (currentMusic.active && !currentMusic.fadingOut) {
-        currentMusic.fadingOut = true;
-        currentMusic.fadeDuration = duration;
-        currentMusic.fadeTimer = 0.0f;
-        currentMusic.startVol = musicVol;  // Store current music volume
+    void AudioManager::StopMusicFade(int channel, float duration) {
+      if (activeMusics.find(channel) != activeMusics.end()) {
+        MusicState& state = activeMusics[channel];
+        if (!state.fadingOut) {
+          state.fadingOut = true;
+          state.fadeDuration = duration;
+          state.fadeTimer = 0.0f;
+          state.startVol = GetChannelVolume(channel);
+        }
       }
+    }
+
+    void AudioManager::ClearChannel(int channel) {
+      StopMusic(channel);
     }
 
     void AudioManager::StopAllMusic() {
-      if (currentMusic.active) StopMusic(currentMusic.id);
+      for (auto& pair : activeMusics) {
+        if (musics.find(pair.second.id) != musics.end()) {
+          ::StopMusicStream(musics[pair.second.id]);
+        }
+      }
+      activeMusics.clear();
     }
 
     void AudioManager::SetMasterVolume(float vol) { masterVol = vol; }
-    void AudioManager::SetMusicVolume(float vol) {
-      musicVol = vol;
-      if (currentMusic.active) ::SetMusicVolume(musics[currentMusic.id], musicVol * masterVol);
+
+    void AudioManager::SetChannelVolume(int channel, float vol) {
+      channelVolumes[channel] = vol;
+      // Update volume immediately if music is playing on this channel and not fading out
+      if (activeMusics.find(channel) != activeMusics.end()) {
+        MusicState& state = activeMusics[channel];
+        if (!state.fadingOut && musics.find(state.id) != musics.end()) {
+           ::SetMusicVolume(musics[state.id], vol * masterVol);
+           state.startVol = vol;
+        }
+      }
     }
-    void AudioManager::SetSoundVolume(float vol) { soundVol = vol; }
+
+    float AudioManager::GetChannelVolume(int channel) const {
+      auto it = channelVolumes.find(channel);
+      return (it != channelVolumes.end()) ? it->second : 1.0f;
+    }
   }  // namespace Audio
 }  // namespace Fumbo

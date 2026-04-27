@@ -401,17 +401,18 @@ public:
   void Update(); // Required for looping music manually
 
   // Sound Effects
-  void PlaySound(const std::string &id);
+  void PlaySound(const std::string &id, int channel = 0);
   void StopSound(const std::string &id);
 
   // Music
   // loopStart: offset in seconds to loop back to when music ends.
   // If loopStart < 0, it loops from beginning.
   // If looping is false, it plays once.
-  void PlayMusic(const std::string &id, bool loop = true,
+  void PlayMusic(const std::string &id, int channel = 0, bool loop = true,
                  float loopStart = 0.0f);
-  void StopMusic(const std::string &id);
-  void StopMusicFade(float duration = 1.0f); // Fade out current music
+  void StopMusic(int channel);
+  void StopMusicFade(int channel, float duration = 1.0f); // Fade out current music
+  void ClearChannel(int channel);
   void StopAllMusic();
 
   // Resource Loading (Manual loading if desired, or auto-load via Play)
@@ -421,12 +422,10 @@ public:
 
   // Volume Control (0.0f to 1.0f)
   void SetMasterVolume(float vol);
-  void SetMusicVolume(float vol);
-  void SetSoundVolume(float vol);
+  void SetChannelVolume(int channel, float vol);
 
   float GetMasterVolume() const { return masterVol; }
-  float GetMusicVolume() const { return musicVol; }
-  float GetSoundVolume() const { return soundVol; }
+  float GetChannelVolume(int channel) const;
 
 private:
   AudioManager() = default;
@@ -434,6 +433,7 @@ private:
 
   std::map<std::string, ::Sound> sounds;
   std::map<std::string, ::Music> musics;
+  std::map<int, float> channelVolumes;
 
   // Track active music state for custom looping
   struct MusicState {
@@ -449,11 +449,9 @@ private:
     float startVol;
   };
 
-  MusicState currentMusic = {"", false, 0.0f, false, false, 0.0f, 0.0f, 1.0f};
+  std::map<int, MusicState> activeMusics;
 
   float masterVol = 1.0f;
-  float musicVol = 1.0f;
-  float soundVol = 1.0f;
 };
 } // namespace Audio
 } // namespace Fumbo
