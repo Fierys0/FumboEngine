@@ -411,7 +411,8 @@ public:
   void PlayMusic(const std::string &id, int channel = 0, bool loop = true,
                  float loopStart = 0.0f);
   void StopMusic(int channel);
-  void StopMusicFade(int channel, float duration = 1.0f); // Fade out current music
+  void StopMusicFade(int channel,
+                     float duration = 1.0f); // Fade out current music
   void ClearChannel(int channel);
   void StopAllMusic();
 
@@ -797,6 +798,15 @@ void Camera2DFollow(Camera2D *camera, Rectangle targetRect, float offsetx = 0,
                     float offsety = 0, float smoothness = 0.0f);
 void Camera2DFollow(Camera2D *camera, Vector2 targetCenter, float offsetx = 0,
                     float offsety = 0, float smoothness = 0.0f);
+Texture2D ColorToTexture(Color color, Vector2 resolution = {0, 0});
+
+// Draw a texture at an Object's AABB position using virtual resolution scaling (1280x720).
+// source: sprite sheet frame rectangle (negative width flips horizontally).
+// offset: pixel nudge applied after centering on the AABB.
+// scale:  multiplier on the AABB size (1.0 = exact hitbox size, 2.0 = double).
+void DrawWorldSprite(const Fumbo::Graphic2D::Object *object, Texture2D texture,
+                Rectangle source, Vector2 offset = {0, 0}, float scale = 1.0f,
+                Color tint = WHITE);
 } // namespace Utils
 } // namespace Fumbo
 

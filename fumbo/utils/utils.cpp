@@ -122,5 +122,45 @@ void Camera2DFollow(Camera2D *camera, Vector2 targetCenter, float offsetx,
   }
 }
 
+Texture2D ColorToTexture(Color color, Vector2 resolution) {
+  if (resolution.x == 0 && resolution.y == 0) {
+    resolution = {100, 100};
+  }
+
+  Image image = GenImageColor(resolution.x, resolution.y, color);
+  Texture2D texture = LoadTextureFromImage(image);
+  UnloadImage(image);
+  return texture;
+}
+
+void DrawWorldSprite(const Fumbo::Graphic2D::Object *object, Texture2D texture,
+                     Rectangle source, Vector2 offset, float scale,
+                     Color tint) {
+  if (!object)
+    return;
+
+  Rectangle aabb = object->GetAABB();
+  Vector2 uiScale = GetUIScale();
+
+  // Draw size is based on the SOURCE rectangle size scaled.
+  // This allows sprites of different aspect ratios to render correctly.
+  float drawW = fabsf(source.width) * scale;
+  float drawH = source.height * scale;
+
+  // Center the sprite on the object's center point
+  float centerX = aabb.x + aabb.width * 0.5f;
+  float centerY = aabb.y + aabb.height * 0.5f;
+
+  float drawX = centerX - (drawW * 0.5f) + offset.x;
+  float drawY = centerY - (drawH * 0.5f) + offset.y;
+
+  // Scale to screen space (1280x720 virtual resolution)
+  Rectangle dest = {drawX * uiScale.x, drawY * uiScale.y, drawW * uiScale.x,
+                    drawH * uiScale.y};
+
+  // Use raw raylib DrawTexturePro because coordinates are already scaled
+  ::DrawTexturePro(texture, source, dest, {0, 0}, 0.0f, tint);
+}
+
 } // namespace Utils
 } // namespace Fumbo

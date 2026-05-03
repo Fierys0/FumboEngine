@@ -422,6 +422,7 @@ void DrawSplineSegmentBezierCubic(Vector2 point1, Vector2 control2,
                                  thickness * scale.y, color);
 }
 
+
 void DrawBackground(Texture2D backgroundTex) {
   ::DrawTexturePro(
       backgroundTex,
