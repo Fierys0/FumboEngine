@@ -784,8 +784,9 @@ namespace Utils {
 constexpr float UI_WIDTH = 1280.0f;
 constexpr float UI_HEIGHT = 720.0f;
 
-// UI scale
+// UI scale and offset
 Vector2 GetUIScale();
+Vector2 GetUIOffset();
 
 // Coordinate helpers
 Vector2 CenterPosX(Vector2 objsize);

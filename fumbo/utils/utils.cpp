@@ -7,8 +7,15 @@
 namespace Fumbo {
 namespace Utils {
 Vector2 GetUIScale() {
-  return {(float)GetScreenWidth() / UI_WIDTH,
-          (float)GetScreenHeight() / UI_HEIGHT};
+  float sw = (float)GetScreenWidth(), sh = (float)GetScreenHeight();
+  float sc = std::fmin(sw / UI_WIDTH, sh / UI_HEIGHT);
+  return {sc, sc};
+}
+
+Vector2 GetUIOffset() {
+  float sw = (float)GetScreenWidth(), sh = (float)GetScreenHeight();
+  float sc = std::fmin(sw / UI_WIDTH, sh / UI_HEIGHT);
+  return {(sw - UI_WIDTH * sc) * 0.5f, (sh - UI_HEIGHT * sc) * 0.5f};
 }
 
 Vector2 CenterPosX(Vector2 objsize) {
@@ -155,7 +162,8 @@ void DrawWorldSprite(const Fumbo::Graphic2D::Object *object, Texture2D texture,
   float drawY = centerY - (drawH * 0.5f) + offset.y;
 
   // Scale to screen space (1280x720 virtual resolution)
-  Rectangle dest = {drawX * uiScale.x, drawY * uiScale.y, drawW * uiScale.x,
+  Vector2 globalOffset = GetUIOffset();
+  Rectangle dest = {drawX * uiScale.x + globalOffset.x, drawY * uiScale.y + globalOffset.y, drawW * uiScale.x,
                     drawH * uiScale.y};
 
   // Use raw raylib DrawTexturePro because coordinates are already scaled
