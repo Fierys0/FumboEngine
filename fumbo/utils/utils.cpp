@@ -170,5 +170,83 @@ void DrawWorldSprite(const Fumbo::Graphic2D::Object *object, Texture2D texture,
   ::DrawTexturePro(texture, source, dest, {0, 0}, 0.0f, tint);
 }
 
+void DrawWorldSpriteAt(Rectangle worldRect, Texture2D texture,
+                       Rectangle source, Color tint) {
+  Vector2 uiScale = GetUIScale();
+  Vector2 globalOffset = GetUIOffset();
+
+  Rectangle dest = {
+      worldRect.x * uiScale.x + globalOffset.x,
+      worldRect.y * uiScale.y + globalOffset.y,
+      worldRect.width * uiScale.x,
+      worldRect.height * uiScale.y
+  };
+
+  ::DrawTexturePro(texture, source, dest, {0, 0}, 0.0f, tint);
+}
+
+void DrawWorldSpriteTiled(const Fumbo::Graphic2D::Object *object,
+                          Texture2D texture, float tileSize,
+                          TileMode tileMode, Color tint) {
+  if (!object || texture.id == 0)
+    return;
+
+  Rectangle aabb = object->GetAABB();
+  Vector2 uiScale = GetUIScale();
+  Vector2 globalOffset = GetUIOffset();
+
+  // tileSize = world units per full texture repeat on the tiled axis.
+  // 0 means use the texture's native pixel width (or height).
+  float tw = (tileSize > 0.0f) ? tileSize : (float)texture.width;
+  float th = (tileSize > 0.0f) ? tileSize : (float)texture.height;
+
+  float regionX = aabb.x;
+  float regionY = aabb.y;
+  float regionW = aabb.width;
+  float regionH = aabb.height;
+
+  bool tileX = (tileMode == TileMode::TILE_X || tileMode == TileMode::TILE_XY);
+  bool tileY = (tileMode == TileMode::TILE_Y || tileMode == TileMode::TILE_XY);
+
+  // One tile's drawn size on each axis
+  float drawW = tileX ? tw : regionW;
+  float drawH = tileY ? th : regionH;
+
+  int tilesX = tileX ? (int)std::ceilf(regionW / tw) : 1;
+  int tilesY = tileY ? (int)std::ceilf(regionH / th) : 1;
+
+  // Full source rect of the texture
+  Rectangle fullSrc = {0, 0, (float)texture.width, (float)texture.height};
+
+  for (int ty = 0; ty < tilesY; ty++) {
+    for (int tx = 0; tx < tilesX; tx++) {
+      float worldX = regionX + tx * tw;
+      float worldY = regionY + ty * th;
+
+      // How much of this tile is still inside the region
+      float clampW = std::fminf(drawW, regionX + regionW - worldX);
+      float clampH = std::fminf(drawH, regionY + regionH - worldY);
+
+      // Proportionally clip the SOURCE so we only show the visible portion
+      // of the texture (never stretch a partial tile).
+      Rectangle src = {
+          fullSrc.x,
+          fullSrc.y,
+          fullSrc.width  * (clampW / drawW),
+          fullSrc.height * (clampH / drawH)
+      };
+
+      Rectangle dest = {
+          worldX * uiScale.x + globalOffset.x,
+          worldY * uiScale.y + globalOffset.y,
+          clampW * uiScale.x,
+          clampH * uiScale.y
+      };
+
+      ::DrawTexturePro(texture, src, dest, {0, 0}, 0.0f, tint);
+    }
+  }
+}
+
 } // namespace Utils
 } // namespace Fumbo
