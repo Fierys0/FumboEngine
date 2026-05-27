@@ -3,6 +3,7 @@
 #ifdef FUMBO_VIDEO_SUPPORT
 #include "fumbo/video.hpp"
 #endif
+#include "fumbo/external/portable-file-dialogs.h"
 #include "raylib.h"
 #include "raymath.h"
 #include <algorithm>
