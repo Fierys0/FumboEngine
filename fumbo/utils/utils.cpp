@@ -7,8 +7,15 @@
 namespace Fumbo {
 namespace Utils {
 Vector2 GetUIScale() {
-  return {(float)GetScreenWidth() / UI_WIDTH,
-          (float)GetScreenHeight() / UI_HEIGHT};
+  float sw = (float)GetScreenWidth(), sh = (float)GetScreenHeight();
+  float sc = std::fmin(sw / UI_WIDTH, sh / UI_HEIGHT);
+  return {sc, sc};
+}
+
+Vector2 GetUIOffset() {
+  float sw = (float)GetScreenWidth(), sh = (float)GetScreenHeight();
+  float sc = std::fmin(sw / UI_WIDTH, sh / UI_HEIGHT);
+  return {(sw - UI_WIDTH * sc) * 0.5f, (sh - UI_HEIGHT * sc) * 0.5f};
 }
 
 Vector2 CenterPosX(Vector2 objsize) {
@@ -118,6 +125,125 @@ void Camera2DFollow(Camera2D *camera, Vector2 targetCenter, float offsetx,
     } else {
       // Instant snap
       camera->target = targetPos;
+    }
+  }
+}
+
+Texture2D ColorToTexture(Color color, Vector2 resolution) {
+  if (resolution.x == 0 && resolution.y == 0) {
+    resolution = {100, 100};
+  }
+
+  Image image = GenImageColor(resolution.x, resolution.y, color);
+  Texture2D texture = LoadTextureFromImage(image);
+  UnloadImage(image);
+  return texture;
+}
+
+void DrawWorldSprite(const Fumbo::Graphic2D::Object *object, Texture2D texture,
+                     Rectangle source, Vector2 offset, float scale,
+                     Color tint) {
+  if (!object)
+    return;
+
+  Rectangle aabb = object->GetAABB();
+  Vector2 uiScale = GetUIScale();
+
+  // Draw size is based on the SOURCE rectangle size scaled.
+  // This allows sprites of different aspect ratios to render correctly.
+  float drawW = fabsf(source.width) * scale;
+  float drawH = source.height * scale;
+
+  // Center the sprite on the object's center point
+  float centerX = aabb.x + aabb.width * 0.5f;
+  float centerY = aabb.y + aabb.height * 0.5f;
+
+  float drawX = centerX - (drawW * 0.5f) + offset.x;
+  float drawY = centerY - (drawH * 0.5f) + offset.y;
+
+  // Scale to screen space (1280x720 virtual resolution)
+  Vector2 globalOffset = GetUIOffset();
+  Rectangle dest = {drawX * uiScale.x + globalOffset.x, drawY * uiScale.y + globalOffset.y, drawW * uiScale.x,
+                    drawH * uiScale.y};
+
+  // Use raw raylib DrawTexturePro because coordinates are already scaled
+  ::DrawTexturePro(texture, source, dest, {0, 0}, 0.0f, tint);
+}
+
+void DrawWorldSpriteAt(Rectangle worldRect, Texture2D texture,
+                       Rectangle source, Color tint) {
+  Vector2 uiScale = GetUIScale();
+  Vector2 globalOffset = GetUIOffset();
+
+  Rectangle dest = {
+      worldRect.x * uiScale.x + globalOffset.x,
+      worldRect.y * uiScale.y + globalOffset.y,
+      worldRect.width * uiScale.x,
+      worldRect.height * uiScale.y
+  };
+
+  ::DrawTexturePro(texture, source, dest, {0, 0}, 0.0f, tint);
+}
+
+void DrawWorldSpriteTiled(const Fumbo::Graphic2D::Object *object,
+                          Texture2D texture, float tileSize,
+                          TileMode tileMode, Color tint) {
+  if (!object || texture.id == 0)
+    return;
+
+  Rectangle aabb = object->GetAABB();
+  Vector2 uiScale = GetUIScale();
+  Vector2 globalOffset = GetUIOffset();
+
+  // tileSize = world units per full texture repeat on the tiled axis.
+  // 0 means use the texture's native pixel width (or height).
+  float tw = (tileSize > 0.0f) ? tileSize : (float)texture.width;
+  float th = (tileSize > 0.0f) ? tileSize : (float)texture.height;
+
+  float regionX = aabb.x;
+  float regionY = aabb.y;
+  float regionW = aabb.width;
+  float regionH = aabb.height;
+
+  bool tileX = (tileMode == TileMode::TILE_X || tileMode == TileMode::TILE_XY);
+  bool tileY = (tileMode == TileMode::TILE_Y || tileMode == TileMode::TILE_XY);
+
+  // One tile's drawn size on each axis
+  float drawW = tileX ? tw : regionW;
+  float drawH = tileY ? th : regionH;
+
+  int tilesX = tileX ? (int)std::ceilf(regionW / tw) : 1;
+  int tilesY = tileY ? (int)std::ceilf(regionH / th) : 1;
+
+  // Full source rect of the texture
+  Rectangle fullSrc = {0, 0, (float)texture.width, (float)texture.height};
+
+  for (int ty = 0; ty < tilesY; ty++) {
+    for (int tx = 0; tx < tilesX; tx++) {
+      float worldX = regionX + tx * tw;
+      float worldY = regionY + ty * th;
+
+      // How much of this tile is still inside the region
+      float clampW = std::fminf(drawW, regionX + regionW - worldX);
+      float clampH = std::fminf(drawH, regionY + regionH - worldY);
+
+      // Proportionally clip the SOURCE so we only show the visible portion
+      // of the texture (never stretch a partial tile).
+      Rectangle src = {
+          fullSrc.x,
+          fullSrc.y,
+          fullSrc.width  * (clampW / drawW),
+          fullSrc.height * (clampH / drawH)
+      };
+
+      Rectangle dest = {
+          worldX * uiScale.x + globalOffset.x,
+          worldY * uiScale.y + globalOffset.y,
+          clampW * uiScale.x,
+          clampH * uiScale.y
+      };
+
+      ::DrawTexturePro(texture, src, dest, {0, 0}, 0.0f, tint);
     }
   }
 }

@@ -72,6 +72,9 @@ void Button::Update(Camera2D *camera) {
     screenBounds = uiBounds; // No scaling for world space
   } else {
     screenBounds = Fumbo::Utils::UISpaceToScreen(uiBounds);
+    Vector2 uiOffset = Fumbo::Utils::GetUIOffset();
+    screenBounds.x += uiOffset.x;
+    screenBounds.y += uiOffset.y;
   }
 
   this->Position = Vector2{screenBounds.x, screenBounds.y};
@@ -164,6 +167,9 @@ void Button::Draw() {
     screenBounds = uiBounds;
   } else {
     screenBounds = Fumbo::Utils::UISpaceToScreen(uiBounds);
+    Vector2 uiOffset = Fumbo::Utils::GetUIOffset();
+    screenBounds.x += uiOffset.x;
+    screenBounds.y += uiOffset.y;
   }
 
   int width = (int)screenBounds.width;
@@ -191,13 +197,14 @@ void Button::Draw() {
     if (IsTextureValid(texture)) {
       // Bake base appearance at WHITE — hover/disabled tint applied cheaply at
       // blit time
-      DrawTexturePro(
+      Fumbo::Graphic2D::DrawTexturePro(
           texture, Rectangle{0, 0, (float)texture.width, (float)texture.height},
           Rectangle{0, 0, (float)width, (float)height}, Vector2{0, 0}, 0.0f,
           WHITE);
     } else {
-      DrawRectangleRounded(Rectangle{1, 1, (float)width - 2, (float)height - 2},
-                           m_roundness, m_segments, buttonColor);
+      Fumbo::Graphic2D::DrawRectangleRounded(
+          Rectangle{1, 1, (float)width - 2, (float)height - 2}, m_roundness,
+          m_segments, buttonColor);
     }
 
     // Draw text

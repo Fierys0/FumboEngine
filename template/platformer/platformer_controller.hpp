@@ -32,6 +32,10 @@ private:
   float groundedThreshold = 50.0f;
   int facingDirection = 1; // 1 for right, -1 for left
 
+  // Jump control: prevents double-jump
+  bool canJump = true;      // allowed to jump right now?
+  bool wasGrounded = false; // grounded state from previous frame
+
   void ClampVelocityX();
 };
 

@@ -411,7 +411,8 @@ public:
   void PlayMusic(const std::string &id, int channel = 0, bool loop = true,
                  float loopStart = 0.0f);
   void StopMusic(int channel);
-  void StopMusicFade(int channel, float duration = 1.0f); // Fade out current music
+  void StopMusicFade(int channel,
+                     float duration = 1.0f); // Fade out current music
   void ClearChannel(int channel);
   void StopAllMusic();
 
@@ -783,8 +784,9 @@ namespace Utils {
 constexpr float UI_WIDTH = 1280.0f;
 constexpr float UI_HEIGHT = 720.0f;
 
-// UI scale
+// UI scale and offset
 Vector2 GetUIScale();
+Vector2 GetUIOffset();
 
 // Coordinate helpers
 Vector2 CenterPosX(Vector2 objsize);
@@ -797,6 +799,24 @@ void Camera2DFollow(Camera2D *camera, Rectangle targetRect, float offsetx = 0,
                     float offsety = 0, float smoothness = 0.0f);
 void Camera2DFollow(Camera2D *camera, Vector2 targetCenter, float offsetx = 0,
                     float offsety = 0, float smoothness = 0.0f);
+Texture2D ColorToTexture(Color color, Vector2 resolution = {0, 0});
+
+void DrawWorldSprite(const Fumbo::Graphic2D::Object *object, Texture2D texture,
+                     Rectangle source, Vector2 offset = {0, 0},
+                     float scale = 1.0f, Color tint = WHITE);
+
+// Draw a texture at an arbitrary world-space rectangle (for decorations, no
+// physics object needed).
+void DrawWorldSpriteAt(Rectangle worldRect, Texture2D texture, Rectangle source,
+                       Color tint = WHITE);
+
+// Tiling mode for DrawWorldSpriteTiled.
+enum class TileMode { TILE_X, TILE_Y, TILE_XY };
+
+void DrawWorldSpriteTiled(const Fumbo::Graphic2D::Object *object,
+                          Texture2D texture, float tileSize,
+                          TileMode tileMode = TileMode::TILE_X,
+                          Color tint = WHITE);
 } // namespace Utils
 } // namespace Fumbo
 
