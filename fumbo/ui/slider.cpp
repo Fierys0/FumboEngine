@@ -48,10 +48,18 @@ bool Slider::Update(Rectangle bounds) {
   hitRect.y -= extraY;
   hitRect.height += extraY * 2;
 
+  Rectangle screenBounds = Fumbo::Utils::UISpaceToScreen(bounds);
+  Rectangle screenHitRect = Fumbo::Utils::UISpaceToScreen(hitRect);
+  Vector2 uiOffset = Fumbo::Utils::GetUIOffset();
+  screenBounds.x += uiOffset.x;
+  screenBounds.y += uiOffset.y;
+  screenHitRect.x += uiOffset.x;
+  screenHitRect.y += uiOffset.y;
+
   // Simple click & drag logic
   if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
     if (!m_dragging) {
-      if (CheckCollisionPointRec(mousePos, hitRect)) {
+      if (CheckCollisionPointRec(mousePos, screenHitRect)) {
         m_dragging = true;
       }
     }
@@ -60,7 +68,7 @@ bool Slider::Update(Rectangle bounds) {
   }
 
   if (m_dragging) {
-    float normalized = (mousePos.x - bounds.x) / bounds.width;
+    float normalized = (mousePos.x - screenBounds.x) / screenBounds.width;
     if (normalized < 0.0f)
       normalized = 0.0f;
     if (normalized > 1.0f)
@@ -92,15 +100,15 @@ void Slider::Draw(Rectangle bounds) {
   Rectangle trackRect = {bounds.x, trackY, bounds.width, trackHeight};
 
   if (m_config.trackTexture.id != 0) {
-    DrawTexturePro(m_config.trackTexture,
-                   {0, 0, (float)m_config.trackTexture.width,
-                    (float)m_config.trackTexture.height},
-                   trackRect, {0, 0}, 0.0f, WHITE);
+    Fumbo::Graphic2D::DrawTexturePro(m_config.trackTexture,
+                                     {0, 0, (float)m_config.trackTexture.width,
+                                      (float)m_config.trackTexture.height},
+                                     trackRect, {0, 0}, 0.0f, WHITE);
   } else {
-    DrawRectangleRec(trackRect, m_config.trackColor);
+    Fumbo::Graphic2D::DrawRectangleRec(trackRect, m_config.trackColor);
     if (m_config.outlineThickness > 0)
-      DrawRectangleLinesEx(trackRect, m_config.outlineThickness,
-                           m_config.outlineColor);
+      Fumbo::Graphic2D::DrawRectangleLinesEx(
+          trackRect, m_config.outlineThickness, m_config.outlineColor);
   }
 
   // Progress
@@ -111,10 +119,10 @@ void Slider::Draw(Rectangle bounds) {
     float textureWidth = (float)m_config.progressTexture.width;
     float textureHeight = (float)m_config.progressTexture.height;
     Rectangle source = {0, 0, textureWidth * normalized, textureHeight};
-    DrawTexturePro(m_config.progressTexture, source, progressRect, {0, 0}, 0.0f,
-                   WHITE);
+    Fumbo::Graphic2D::DrawTexturePro(m_config.progressTexture, source,
+                                     progressRect, {0, 0}, 0.0f, WHITE);
   } else {
-    DrawRectangleRec(progressRect, m_config.progressColor);
+    Fumbo::Graphic2D::DrawRectangleRec(progressRect, m_config.progressColor);
   }
 
   // Knob
@@ -129,13 +137,14 @@ void Slider::Draw(Rectangle bounds) {
   Rectangle knobRect = {knobX, knobY, knobWidth, knobHeight};
 
   if (m_config.knobTexture.id != 0) {
-    DrawTexturePro(m_config.knobTexture,
-                   {0, 0, (float)m_config.knobTexture.width,
-                    (float)m_config.knobTexture.height},
-                   knobRect, {0, 0}, 0.0f, WHITE);
+    Fumbo::Graphic2D::DrawTexturePro(m_config.knobTexture,
+                                     {0, 0, (float)m_config.knobTexture.width,
+                                      (float)m_config.knobTexture.height},
+                                     knobRect, {0, 0}, 0.0f, WHITE);
   } else {
-    DrawRectangleRec(knobRect, m_config.knobColor);
-    DrawRectangleLinesEx(knobRect, 1.0f, m_config.outlineColor);
+    Fumbo::Graphic2D::DrawRectangleRec(knobRect, m_config.knobColor);
+    Fumbo::Graphic2D::DrawRectangleLinesEx(knobRect, 1.0f,
+                                           m_config.outlineColor);
   }
 }
 
