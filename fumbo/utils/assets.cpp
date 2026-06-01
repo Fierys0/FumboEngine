@@ -60,6 +60,48 @@ Texture2D LoadTexture(const std::string &fileName) {
   return CheckedTexture();
 }
 
+Texture2D LoadTextureThemed(const std::string &fileName, Color targetColor) {
+  // Muat tekstur dengan mengganti warna pixel non transparan ke warna target
+  Image img = LoadImage(fileName);
+  if (img.data != nullptr) {
+    ImageFormat(&img, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+    Color *pixels = (Color *)img.data;
+    for (int i = 0; i < img.width * img.height; ++i) {
+      if (pixels[i].a > 0) {
+        pixels[i].r = targetColor.r;
+        pixels[i].g = targetColor.g;
+        pixels[i].b = targetColor.b;
+      }
+    }
+    Texture2D tex = LoadTextureFromImage(img);
+    UnloadImage(img);
+    if (tex.id > 0) {
+      return tex;
+    }
+  }
+  return CheckedTexture();
+}
+
+void RecolorTexture(Texture2D &texture, Color targetColor) {
+  // Ubah warna piksel non transparan dalam tekstur GPU menggunakan data image
+  if (texture.id > 0) {
+    Image img = LoadImageFromTexture(texture);
+    if (img.data != nullptr) {
+      ImageFormat(&img, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+      Color *pixels = (Color *)img.data;
+      for (int i = 0; i < img.width * img.height; ++i) {
+        if (pixels[i].a > 0) {
+          pixels[i].r = targetColor.r;
+          pixels[i].g = targetColor.g;
+          pixels[i].b = targetColor.b;
+        }
+      }
+      UpdateTexture(texture, img.data);
+      UnloadImage(img);
+    }
+  }
+}
+
 Image LoadImage(const std::string &fileName) {
   // Try loading from packs first
   for (const auto &pack : g_assetPacks) {

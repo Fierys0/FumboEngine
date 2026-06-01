@@ -839,6 +839,9 @@ const std::vector<std::unique_ptr<AssetPack>> &GetAssetPacks();
 
 // Asset Loading Wrappers (automatically check pack first)
 Texture2D LoadTexture(const std::string &fileName);
+Texture2D LoadTextureThemed(const std::string &fileName, Color targetColor);
+// Ubah warna piksel non transparan dalam tekstur ke warna target
+void RecolorTexture(Texture2D &texture, Color targetColor);
 Image LoadImage(const std::string &fileName);
 Font LoadFont(const std::string &fileName, int fontSize);
 Sound LoadSound(const std::string &fileName);
