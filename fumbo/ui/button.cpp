@@ -196,13 +196,14 @@ void Button::Draw() {
 
     if (IsTextureValid(texture)) {
       // Bake base appearance at WHITE — hover/disabled tint applied cheaply at
-      // blit time
-      Fumbo::Graphic2D::DrawTexturePro(
+      // blit time. Use raw Raylib to draw inside RenderTexture to avoid double scaling.
+      ::DrawTexturePro(
           texture, Rectangle{0, 0, (float)texture.width, (float)texture.height},
           Rectangle{0, 0, (float)width, (float)height}, Vector2{0, 0}, 0.0f,
           WHITE);
     } else {
-      Fumbo::Graphic2D::DrawRectangleRounded(
+      // Use raw Raylib to draw inside RenderTexture to avoid double scaling.
+      ::DrawRectangleRounded(
           Rectangle{1, 1, (float)width - 2, (float)height - 2}, m_roundness,
           m_segments, buttonColor);
     }
