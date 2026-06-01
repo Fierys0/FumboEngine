@@ -227,5 +227,68 @@ namespace Fumbo {
       auto it = channelVolumes.find(channel);
       return (it != channelVolumes.end()) ? it->second : 1.0f;
     }
+
+    void AudioManager::PauseMusic(int channel) {
+      auto it = activeMusics.find(channel);
+      if (it != activeMusics.end() && it->second.active) {
+        auto mIt = musics.find(it->second.id);
+        if (mIt != musics.end()) {
+          ::PauseMusicStream(mIt->second);
+        }
+      }
+    }
+
+    void AudioManager::ResumeMusic(int channel) {
+      auto it = activeMusics.find(channel);
+      if (it != activeMusics.end() && it->second.active) {
+        auto mIt = musics.find(it->second.id);
+        if (mIt != musics.end()) {
+          ::ResumeMusicStream(mIt->second);
+        }
+      }
+    }
+
+    float AudioManager::GetMusicLength(int channel) {
+      auto it = activeMusics.find(channel);
+      if (it != activeMusics.end() && it->second.active) {
+        auto mIt = musics.find(it->second.id);
+        if (mIt != musics.end()) {
+          return ::GetMusicTimeLength(mIt->second);
+        }
+      }
+      return 0.0f;
+    }
+
+    float AudioManager::GetMusicPlayed(int channel) {
+      auto it = activeMusics.find(channel);
+      if (it != activeMusics.end() && it->second.active) {
+        auto mIt = musics.find(it->second.id);
+        if (mIt != musics.end()) {
+          return ::GetMusicTimePlayed(mIt->second);
+        }
+      }
+      return 0.0f;
+    }
+
+    void AudioManager::SeekMusic(float position, int channel) {
+      auto it = activeMusics.find(channel);
+      if (it != activeMusics.end() && it->second.active) {
+        auto mIt = musics.find(it->second.id);
+        if (mIt != musics.end()) {
+          ::SeekMusicStream(mIt->second, position);
+        }
+      }
+    }
+
+    bool AudioManager::IsMusicPlaying(int channel) {
+      auto it = activeMusics.find(channel);
+      if (it != activeMusics.end() && it->second.active) {
+        auto mIt = musics.find(it->second.id);
+        if (mIt != musics.end()) {
+          return ::IsMusicStreamPlaying(mIt->second);
+        }
+      }
+      return false;
+    }
   }  // namespace Audio
 }  // namespace Fumbo

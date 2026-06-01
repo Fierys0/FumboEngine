@@ -20,6 +20,15 @@ void Slider::SetValue(float value) {
     m_value = m_max;
 }
 
+void Slider::SetRange(float min, float max) {
+  m_min = min;
+  m_max = max;
+  if (m_value < m_min)
+    m_value = m_min;
+  if (m_value > m_max)
+    m_value = m_max;
+}
+
 float Slider::GetValue() const { return m_value; }
 
 void Slider::SetStyle(const SliderConfig &config) { m_config = config; }

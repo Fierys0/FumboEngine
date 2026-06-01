@@ -412,6 +412,12 @@ public:
   void PlayMusic(const std::string &id, int channel = 0, bool loop = true,
                  float loopStart = 0.0f);
   void StopMusic(int channel);
+  void PauseMusic(int channel = 0);
+  void ResumeMusic(int channel = 0);
+  float GetMusicLength(int channel = 0);
+  float GetMusicPlayed(int channel = 0);
+  void SeekMusic(float position, int channel = 0);
+  bool IsMusicPlaying(int channel = 0);
   void StopMusicFade(int channel,
                      float duration = 1.0f); // Fade out current music
   void ClearChannel(int channel);
@@ -582,6 +588,7 @@ public:
   void Draw(Rectangle bounds);
 
   void SetValue(float value);
+  void SetRange(float min, float max);
   float GetValue() const;
 
   void SetStyle(const SliderConfig &config);
