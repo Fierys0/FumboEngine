@@ -35,6 +35,30 @@ void PrintHelp(const char *programName) {
             << " assets/ images.fpk png,jpg,jpeg\n";
 }
 
+std::string GetRelativePath(const fs::path &filePath, const fs::path &rootDir) {
+  std::string fileStr = filePath.string();
+  std::string rootStr = rootDir.string();
+  for (char &c : fileStr) if (c == '\\') c = '/';
+  for (char &c : rootStr) if (c == '\\') c = '/';
+
+  // Strip trailing slashes
+  while (!rootStr.empty() && (rootStr.back() == '/' || rootStr.back() == '\\')) {
+    rootStr.pop_back();
+  }
+
+  size_t pos = fileStr.find(rootStr);
+  if (pos != std::string::npos) {
+    size_t lastSlash = rootStr.find_last_of('/');
+    std::string rootName = (lastSlash == std::string::npos) ? rootStr : rootStr.substr(lastSlash + 1);
+    std::string suffix = fileStr.substr(pos + rootStr.length());
+    if (!suffix.empty() && suffix[0] == '/') {
+      suffix = suffix.substr(1);
+    }
+    return rootName + "/" + suffix;
+  }
+  return filePath.filename().string();
+}
+
 bool CollectFiles(const fs::path &rootDir, std::vector<FileEntry> &files,
                   const std::vector<std::string> &extensions) {
   if (!fs::exists(rootDir) || !fs::is_directory(rootDir)) {
@@ -64,8 +88,7 @@ bool CollectFiles(const fs::path &rootDir, std::vector<FileEntry> &files,
       FileEntry fileEntry;
       // Include the root directory name in the path (e.g.,
       // "assets/ui/button.png")
-      fileEntry.relativePath =
-          fs::relative(entry.path(), rootDir.parent_path()).string();
+      fileEntry.relativePath = GetRelativePath(entry.path(), rootDir);
 
       // Read file data
       std::ifstream file(entry.path(), std::ios::binary | std::ios::ate);

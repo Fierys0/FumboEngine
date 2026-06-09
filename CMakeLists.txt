@@ -34,14 +34,16 @@ if(PLATFORM STREQUAL "Android")
     add_subdirectory(${RAYMOB_DEPS}/raylib ${CMAKE_CURRENT_BINARY_DIR}/raymob_raylib)
     add_subdirectory(${RAYMOB_DEPS}/raymob ${CMAKE_CURRENT_BINARY_DIR}/raymob_lib)
 else()
-    # Desktop (x86 Linux/Windows): use raylib from engine/lib/raylib
-    if(WIN32)
+    # Desktop (x86 Linux/Windows): raylib is added by the parent CMakeLists.txt
+    # to avoid duplicate binary directory errors. Only add it here when building
+    # the engine standalone (i.e. no parent already added it).
+    if(WIN32 AND NOT TARGET raylib)
         add_subdirectory(lib/raylib)
     endif()
 endif()
 
-# On Android, fumbo_engine is STATIC so it links directly into the game's .so
-if(PLATFORM STREQUAL "Android")
+# On Android and Windows, fumbo_engine is STATIC to avoid duplicate global/singleton instances.
+if(PLATFORM STREQUAL "Android" OR WIN32)
     add_library(fumbo_engine STATIC ${ENGINE_SOURCES})
 else()
     add_library(fumbo_engine SHARED ${ENGINE_SOURCES})
