@@ -1,7 +1,7 @@
 #pragma once
 
 // NO windows.h here anymore — pfd is fully isolated in pfd_wrapper.cpp
-#include "fumbo/pfd_wrapper.hpp"   // ← clean interface, no macro pollution
+#include "fumbo/pfd_wrapper.hpp" // ← clean interface, no macro pollution
 
 #include "fumbo/physics.hpp"
 #ifdef FUMBO_VIDEO_SUPPORT
