@@ -1,11 +1,16 @@
 #pragma once
+
+// NO windows.h here anymore — pfd is fully isolated in pfd_wrapper.cpp
+#include "fumbo/pfd_wrapper.hpp"   // ← clean interface, no macro pollution
+
 #include "fumbo/physics.hpp"
 #ifdef FUMBO_VIDEO_SUPPORT
 #include "fumbo/video.hpp"
 #endif
-#include "fumbo/external/portable-file-dialogs.h"
+
 #include "raylib.h"
 #include "raymath.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -16,8 +21,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-// === FUMBO IGameState
 
 // Abstract base class for all game states
 class IGameState {

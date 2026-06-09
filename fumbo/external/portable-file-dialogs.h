@@ -13,17 +13,25 @@
 #pragma once
 
 #if _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN 1
+
+#ifndef NOMINMAX
+#define NOMINMAX
 #endif
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#include <windows.h>
+
 #include <commdlg.h>
-#include <future> // std::async
 #include <shellapi.h>
 #include <shlobj.h>
-#include <shobjidl.h> // IFileDialog
+#include <shobjidl.h>
 #include <strsafe.h>
-#include <userenv.h> // GetUserProfileDirectory()
-#include <windows.h>
+#include <userenv.h>
+
+#include <future>
 
 #elif __EMSCRIPTEN__
 #include <emscripten.h>
