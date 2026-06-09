@@ -171,6 +171,26 @@ namespace Fumbo {
     void AudioManager::PlayMusic(const std::string& id, int channel, bool loop, float loopStart) {
       // Stop current music on this channel if any
       if (activeMusics.find(channel) != activeMusics.end()) {
+        MusicState& existing = activeMusics[channel];
+        // If same track already active on this channel, just seek to start
+        if (existing.id == id && musics.find(id) != musics.end()) {
+          Fumbo::Log::Debugf("[Audio] Re-playing same track '%s' on channel %d — seeking to 0", id.c_str(), channel);
+          ::Music& m = musics[id];
+          ::StopMusicStream(m);
+          ::SeekMusicStream(m, 0.0f);  // reset decoder cursor
+          float cVol = GetChannelVolume(channel);
+          ::SetMusicVolume(m, cVol * masterVol);
+          ::PlayMusicStream(m);
+          existing.loop      = loop;
+          existing.loopStart = loopStart;
+          existing.fadingOut = false;
+          existing.fadeTimer = 0.0f;
+          existing.startVol  = cVol;
+          existing.active    = true;
+          Fumbo::Log::Infof("[Audio] PlayMusic (seek-restart) '%s' on channel %d", id.c_str(), channel);
+          return;
+        }
+        // Different track — stop old one cleanly
         Fumbo::Log::Debugf("[Audio] Stopping existing music on channel %d before playing '%s'", channel, id.c_str());
         StopMusic(channel);
       }
@@ -184,18 +204,24 @@ namespace Fumbo {
       }
 
       ::Music& m = musics[id];
+
+      // Always seek to 0 before playing to reset the miniaudio decoder cursor.
+      // Without this, PlayMusicStream on a previously-stopped stream produces
+      // no audio on some backends (Windows/Android miniaudio).
+      ::SeekMusicStream(m, 0.0f);
+
       float cVol = GetChannelVolume(channel);
       ::SetMusicVolume(m, cVol * masterVol);
       ::PlayMusicStream(m);
 
       MusicState state;
-      state.id = id;
-      state.loop = loop;
+      state.id        = id;
+      state.loop      = loop;
       state.loopStart = loopStart;
-      state.active = true;
+      state.active    = true;
       state.fadingOut = false;
       state.fadeTimer = 0.0f;
-      state.startVol = cVol;
+      state.startVol  = cVol;
 
       activeMusics[channel] = state;
       Fumbo::Log::Infof("[Audio] PlayMusic '%s' on channel %d  loop=%s  vol=%.2f",
