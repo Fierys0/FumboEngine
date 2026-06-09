@@ -831,6 +831,45 @@ void DrawWorldSpriteTiled(const Fumbo::Graphic2D::Object *object,
 } // namespace Utils
 } // namespace Fumbo
 
+// === Fumbo Logger
+namespace Fumbo {
+namespace Log {
+
+enum class Level { DEBUG, INFO, WARN, ERR };
+
+// Initialize the logger.
+// logFile: path to write log file (empty = no file output).
+// minLevel: minimum level to print/write (default DEBUG = everything).
+void Init(const std::string &logFile = "fumbo.log",
+          Level minLevel = Level::DEBUG);
+
+// Flush and close the log file (call on shutdown).
+void Shutdown();
+
+// Core logging functions
+void Debug(const std::string &msg);
+void Info(const std::string &msg);
+void Warn(const std::string &msg);
+void Error(const std::string &msg);
+
+// Printf-style overloads (uses snprintf internally, safe 4 KB buffer)
+void Debugf(const char *fmt, ...);
+void Infof(const char *fmt, ...);
+void Warnf(const char *fmt, ...);
+void Errorf(const char *fmt, ...);
+
+// Generic: log at an arbitrary level
+void Write(Level level, const std::string &msg);
+
+// Change minimum log level at runtime
+void SetLevel(Level minLevel);
+
+// Returns true when the log file is open
+bool IsFileOpen();
+
+} // namespace Log
+} // namespace Fumbo
+
 // Fumbo Assets
 namespace Fumbo {
 namespace Assets {

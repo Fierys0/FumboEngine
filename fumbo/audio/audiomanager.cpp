@@ -58,61 +58,82 @@ namespace Fumbo {
     bool AudioManager::LoadAudio(const std::string& id, const std::string& path, AudioType type) {
       // Get all asset packs
       const auto& packs = Fumbo::Assets::GetAssetPacks();
-      
+
+      // Normalize path separators (Windows backslash -> forward slash)
+      // miniaudio (used by Raylib) can fail silently on backslash paths
+      std::string normPath = path;
+      for (char& c : normPath)
+        if (c == '\\')
+          c = '/';
+
+      Fumbo::Log::Infof("[Audio] LoadAudio id='%s' path='%s'", id.c_str(), normPath.c_str());
+
       if (type == AudioType::SOUND) {
-        if (sounds.find(id) != sounds.end()) return true;  // Already loaded
-        
+        if (sounds.find(id) != sounds.end()) {
+          Fumbo::Log::Debugf("[Audio] Sound '%s' already loaded, skipping", id.c_str());
+          return true;
+        }
+
         // Try loading from packs first
         for (const auto& pack : packs) {
-          if (pack && pack->IsLoaded() && pack->HasAsset(path)) {
-            std::vector<uint8_t> data = pack->LoadAsset(path);
+          if (pack && pack->IsLoaded() && pack->HasAsset(normPath)) {
+            std::vector<uint8_t> data = pack->LoadAsset(normPath);
             if (!data.empty()) {
-              const char* ext = GetFileExtension(path.c_str());
+              const char* ext = GetFileExtension(normPath.c_str());
               Wave wave = LoadWaveFromMemory(ext, data.data(), static_cast<int>(data.size()));
               if (wave.data != nullptr) {
                 ::Sound s = LoadSoundFromWave(wave);
                 UnloadWave(wave);
                 if (s.stream.buffer != 0) {
                   sounds[id] = s;
-                  TraceLog(LOG_INFO, "[AudioManager] Loaded sound from pack: %s", path.c_str());
+                  Fumbo::Log::Infof("[Audio] Sound '%s' loaded from pack", id.c_str());
                   return true;
                 }
               }
             }
           }
         }
-        
+
         // Fallback to raw file
-        ::Sound s = ::LoadSound(path.c_str());
-        if (s.stream.buffer == 0) return false;
+        ::Sound s = ::LoadSound(normPath.c_str());
+        if (s.stream.buffer == 0) {
+          Fumbo::Log::Errorf("[Audio] Failed to load sound from file: '%s'", normPath.c_str());
+          return false;
+        }
         sounds[id] = s;
-        TraceLog(LOG_INFO, "[AudioManager] Loaded sound from file: %s", path.c_str());
+        Fumbo::Log::Infof("[Audio] Sound '%s' loaded from file", id.c_str());
       } else {
-        if (musics.find(id) != musics.end()) return true;
-        
+        if (musics.find(id) != musics.end()) {
+          Fumbo::Log::Debugf("[Audio] Music '%s' already loaded, skipping", id.c_str());
+          return true;
+        }
+
         // Try loading from packs first
         for (const auto& pack : packs) {
-          if (pack && pack->IsLoaded() && pack->HasAsset(path)) {
-            std::vector<uint8_t> data = pack->LoadAsset(path);
+          if (pack && pack->IsLoaded() && pack->HasAsset(normPath)) {
+            std::vector<uint8_t> data = pack->LoadAsset(normPath);
             if (!data.empty()) {
-              const char* ext = GetFileExtension(path.c_str());
+              const char* ext = GetFileExtension(normPath.c_str());
               ::Music m = LoadMusicStreamFromMemory(ext, data.data(), static_cast<int>(data.size()));
               if (m.stream.buffer != 0) {
-                m.looping = false;  // We handle looping manually for custom points
+                m.looping = false;
                 musics[id] = m;
-                TraceLog(LOG_INFO, "[AudioManager] Loaded music from pack: %s", path.c_str());
+                Fumbo::Log::Infof("[Audio] Music '%s' loaded from pack", id.c_str());
                 return true;
               }
             }
           }
         }
-        
+
         // Fallback to raw file
-        ::Music m = ::LoadMusicStream(path.c_str());
-        if (m.stream.buffer == 0) return false;
-        m.looping = false;  // We handle looping manually for custom points
+        ::Music m = ::LoadMusicStream(normPath.c_str());
+        if (m.stream.buffer == 0) {
+          Fumbo::Log::Errorf("[Audio] Failed to load music from file: '%s'", normPath.c_str());
+          return false;
+        }
+        m.looping = false;
         musics[id] = m;
-        TraceLog(LOG_INFO, "[AudioManager] Loaded music from file: %s", path.c_str());
+        Fumbo::Log::Infof("[Audio] Music '%s' loaded from file", id.c_str());
       }
       return true;
     }
@@ -150,11 +171,16 @@ namespace Fumbo {
     void AudioManager::PlayMusic(const std::string& id, int channel, bool loop, float loopStart) {
       // Stop current music on this channel if any
       if (activeMusics.find(channel) != activeMusics.end()) {
+        Fumbo::Log::Debugf("[Audio] Stopping existing music on channel %d before playing '%s'", channel, id.c_str());
         StopMusic(channel);
       }
 
       if (musics.find(id) == musics.end()) {
-        if (!LoadAudio(id, id, AudioType::MUSIC)) return;
+        Fumbo::Log::Warnf("[Audio] Music '%s' not in map, attempting auto-load", id.c_str());
+        if (!LoadAudio(id, id, AudioType::MUSIC)) {
+          Fumbo::Log::Errorf("[Audio] PlayMusic: auto-load failed for '%s', aborting", id.c_str());
+          return;
+        }
       }
 
       ::Music& m = musics[id];
@@ -172,6 +198,8 @@ namespace Fumbo {
       state.startVol = cVol;
 
       activeMusics[channel] = state;
+      Fumbo::Log::Infof("[Audio] PlayMusic '%s' on channel %d  loop=%s  vol=%.2f",
+                        id.c_str(), channel, loop ? "true" : "false", cVol * masterVol);
     }
 
     void AudioManager::StopMusic(int channel) {
