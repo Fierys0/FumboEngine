@@ -36,7 +36,8 @@ Vector2 CenterPosXY(Vector2 objsize) {
 
 Rectangle UISpaceToScreen(Rectangle ui) {
   Vector2 s = GetUIScale();
-  return {ui.x * s.x, ui.y * s.y, ui.width * s.x, ui.height * s.y};
+  Vector2 o = GetUIOffset();
+  return {ui.x * s.x + o.x, ui.y * s.y + o.y, ui.width * s.x, ui.height * s.y};
 }
 
 void DrawPixelRuler(int spacing, Font font) {
