@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace Fumbo {
 namespace FileDialog {
@@ -21,6 +22,25 @@ namespace FileDialog {
     // Save a file. Returns empty string if cancelled.
     std::string SaveFile(const std::string &title,
                          const std::vector<std::string> &filters = {"All Files", "*"});
+
+    // Asynchronous file dialog
+    class OpenFileAsync {
+    public:
+        OpenFileAsync(const std::string &title,
+                      const std::vector<std::string> &filters = {"All Files", "*"},
+                      bool multiselect = false);
+        ~OpenFileAsync();
+
+        // Checks if the user has completed the dialog (closed/selected) without blocking.
+        bool IsReady() const;
+
+        // Retrieves the selected paths.
+        std::vector<std::string> GetResult();
+
+    private:
+        struct Impl;
+        std::unique_ptr<Impl> m_impl;
+    };
 
 } // namespace FileDialog
 } // namespace Fumbo

@@ -25,5 +25,26 @@ std::string SaveFile(const std::string &title,
     return pfd::save_file(title, "", filters).result();
 }
 
+struct OpenFileAsync::Impl {
+    pfd::open_file dialog;
+    Impl(const std::string &title, const std::vector<std::string> &filters, bool multiselect)
+        : dialog(title, "", filters, multiselect ? pfd::opt::multiselect : pfd::opt::none) {}
+};
+
+OpenFileAsync::OpenFileAsync(const std::string &title,
+                             const std::vector<std::string> &filters,
+                             bool multiselect)
+    : m_impl(std::make_unique<Impl>(title, filters, multiselect)) {}
+
+OpenFileAsync::~OpenFileAsync() = default;
+
+bool OpenFileAsync::IsReady() const {
+    return m_impl->dialog.ready(0);
+}
+
+std::vector<std::string> OpenFileAsync::GetResult() {
+    return m_impl->dialog.result();
+}
+
 } // namespace FileDialog
 } // namespace Fumbo
