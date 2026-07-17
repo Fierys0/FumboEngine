@@ -43,7 +43,7 @@ else()
 endif()
 
 # On Android and Windows, fumbo_engine is STATIC to avoid duplicate global/singleton instances.
-if(PLATFORM STREQUAL "Android")
+if(PLATFORM STREQUAL "Android" OR WIN32)
     add_library(fumbo_engine STATIC ${ENGINE_SOURCES})
 else()
     add_library(fumbo_engine SHARED ${ENGINE_SOURCES})
