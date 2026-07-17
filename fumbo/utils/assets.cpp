@@ -213,8 +213,11 @@ Music LoadMusic(const std::string &fileName) {
       std::vector<uint8_t> data = pack->LoadAsset(fileName);
       if (!data.empty()) {
         const char *ext = GetFileExtension(fileName.c_str());
+        static std::vector<std::shared_ptr<std::vector<uint8_t>>> g_persistedMusicBuffers;
+        auto sharedData = std::make_shared<std::vector<uint8_t>>(std::move(data));
+        g_persistedMusicBuffers.push_back(sharedData);
         ::Music music = LoadMusicStreamFromMemory(
-            ext, data.data(), static_cast<int>(data.size()));
+            ext, sharedData->data(), static_cast<int>(sharedData->size()));
         if (music.stream.buffer != 0) {
           TraceLog(LOG_INFO, "[Assets] Loaded music from pack: %s",
                    fileName.c_str());

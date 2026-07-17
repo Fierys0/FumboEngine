@@ -461,6 +461,7 @@ private:
   };
 
   std::map<int, MusicState> activeMusics;
+  std::map<std::string, std::vector<uint8_t>> musicBuffers;
 
   float masterVol = 1.0f;
 };

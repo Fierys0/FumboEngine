@@ -8,6 +8,7 @@ namespace Fumbo {
       for (auto& pair : musics) UnloadMusicStream(pair.second);
       sounds.clear();
       musics.clear();
+      musicBuffers.clear();
     }
 
     void AudioManager::Update() {
@@ -117,12 +118,15 @@ namespace Fumbo {
             std::vector<uint8_t> data = pack->LoadAsset(normPath);
             if (!data.empty()) {
               const char* ext = GetFileExtension(normPath.c_str());
-              ::Music m = LoadMusicStreamFromMemory(ext, data.data(), static_cast<int>(data.size()));
+              musicBuffers[id] = std::move(data);
+              ::Music m = LoadMusicStreamFromMemory(ext, musicBuffers[id].data(), static_cast<int>(musicBuffers[id].size()));
               if (m.stream.buffer != 0) {
                 m.looping = false;
                 musics[id] = m;
                 Fumbo::Log::Infof("[Audio] Music '%s' loaded from pack", id.c_str());
                 return true;
+              } else {
+                musicBuffers.erase(id);
               }
             }
           }
@@ -150,6 +154,9 @@ namespace Fumbo {
       if (musics.find(id) != musics.end()) {
         UnloadMusicStream(musics[id]);
         musics.erase(id);
+      }
+      if (musicBuffers.find(id) != musicBuffers.end()) {
+        musicBuffers.erase(id);
       }
     }
 
