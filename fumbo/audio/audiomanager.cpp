@@ -3,6 +3,7 @@
 namespace Fumbo {
   namespace Audio {
     void AudioManager::Cleanup() {
+      if (!IsAudioDeviceReady()) return;
       for (auto& pair : sounds) UnloadSound(pair.second);
       for (auto& pair : musics) UnloadMusicStream(pair.second);
       sounds.clear();
@@ -10,6 +11,7 @@ namespace Fumbo {
     }
 
     void AudioManager::Update() {
+      if (!IsAudioDeviceReady()) return;
       for (auto it = activeMusics.begin(); it != activeMusics.end(); ) {
         MusicState& state = it->second;
         if (state.active) {
@@ -56,6 +58,7 @@ namespace Fumbo {
     }
 
     bool AudioManager::LoadAudio(const std::string& id, const std::string& path, AudioType type) {
+      if (!IsAudioDeviceReady()) return false;
       // Get all asset packs
       const auto& packs = Fumbo::Assets::GetAssetPacks();
 
@@ -139,6 +142,7 @@ namespace Fumbo {
     }
 
     void AudioManager::UnloadAudio(const std::string& id) {
+      if (!IsAudioDeviceReady()) return;
       if (sounds.find(id) != sounds.end()) {
         UnloadSound(sounds[id]);
         sounds.erase(id);
@@ -150,6 +154,7 @@ namespace Fumbo {
     }
 
     void AudioManager::PlaySound(const std::string& id, int channel) {
+      if (!IsAudioDeviceReady()) return;
       if (sounds.find(id) != sounds.end()) {
         ::Sound& s = sounds[id];
         float cVol = GetChannelVolume(channel);
@@ -163,12 +168,14 @@ namespace Fumbo {
     }
 
     void AudioManager::StopSound(const std::string& id) {
+      if (!IsAudioDeviceReady()) return;
       if (sounds.find(id) != sounds.end()) {
         ::StopSound(sounds[id]);
       }
     }
 
     void AudioManager::PlayMusic(const std::string& id, int channel, bool loop, float loopStart) {
+      if (!IsAudioDeviceReady()) return;
       // Stop current music on this channel if any
       if (activeMusics.find(channel) != activeMusics.end()) {
         MusicState& existing = activeMusics[channel];
@@ -229,6 +236,7 @@ namespace Fumbo {
     }
 
     void AudioManager::StopMusic(int channel) {
+      if (!IsAudioDeviceReady()) return;
       if (activeMusics.find(channel) != activeMusics.end()) {
         std::string id = activeMusics[channel].id;
         if (musics.find(id) != musics.end()) {
@@ -239,6 +247,7 @@ namespace Fumbo {
     }
 
     void AudioManager::StopMusicFade(int channel, float duration) {
+      if (!IsAudioDeviceReady()) return;
       if (activeMusics.find(channel) != activeMusics.end()) {
         MusicState& state = activeMusics[channel];
         if (!state.fadingOut) {
@@ -255,6 +264,7 @@ namespace Fumbo {
     }
 
     void AudioManager::StopAllMusic() {
+      if (!IsAudioDeviceReady()) return;
       for (auto& pair : activeMusics) {
         if (musics.find(pair.second.id) != musics.end()) {
           ::StopMusicStream(musics[pair.second.id]);
@@ -283,6 +293,7 @@ namespace Fumbo {
     }
 
     void AudioManager::PauseMusic(int channel) {
+      if (!IsAudioDeviceReady()) return;
       auto it = activeMusics.find(channel);
       if (it != activeMusics.end() && it->second.active) {
         auto mIt = musics.find(it->second.id);
@@ -293,6 +304,7 @@ namespace Fumbo {
     }
 
     void AudioManager::ResumeMusic(int channel) {
+      if (!IsAudioDeviceReady()) return;
       auto it = activeMusics.find(channel);
       if (it != activeMusics.end() && it->second.active) {
         auto mIt = musics.find(it->second.id);
@@ -303,6 +315,7 @@ namespace Fumbo {
     }
 
     float AudioManager::GetMusicLength(int channel) {
+      if (!IsAudioDeviceReady()) return 0.0f;
       auto it = activeMusics.find(channel);
       if (it != activeMusics.end() && it->second.active) {
         auto mIt = musics.find(it->second.id);
@@ -314,6 +327,7 @@ namespace Fumbo {
     }
 
     float AudioManager::GetMusicPlayed(int channel) {
+      if (!IsAudioDeviceReady()) return 0.0f;
       auto it = activeMusics.find(channel);
       if (it != activeMusics.end() && it->second.active) {
         auto mIt = musics.find(it->second.id);
@@ -325,6 +339,7 @@ namespace Fumbo {
     }
 
     void AudioManager::SeekMusic(float position, int channel) {
+      if (!IsAudioDeviceReady()) return;
       auto it = activeMusics.find(channel);
       if (it != activeMusics.end() && it->second.active) {
         auto mIt = musics.find(it->second.id);
@@ -335,6 +350,7 @@ namespace Fumbo {
     }
 
     bool AudioManager::IsMusicPlaying(int channel) {
+      if (!IsAudioDeviceReady()) return false;
       auto it = activeMusics.find(channel);
       if (it != activeMusics.end() && it->second.active) {
         auto mIt = musics.find(it->second.id);

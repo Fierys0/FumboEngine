@@ -75,7 +75,7 @@ void Textbox::Update() {
       screenBounds.height - (m_config.padding.y * scale.y * 2)
   };
   Vector2 textPos = {textArea.x - m_scrollOffset, textArea.y};
-  float scaledFontSize = m_fontSize * scale.y;
+  float scaledFontSize = (m_fontSize * 1.15f) * scale.y;
   if (!m_multiline) {
       // rough alignment calculation for single line Y
       textPos.y = textArea.y + (textArea.height - scaledFontSize) / 2.0f;
@@ -192,7 +192,7 @@ void Textbox::InsertTextAtCursor(const std::string& inserted) {
 }
 
 int Textbox::GetCursorIndexFromMouse(Vector2 mousePos, Vector2 textBasePos, float scaleY) {
-    float scaledFontSize = m_fontSize * scaleY;
+    float scaledFontSize = (m_fontSize * 1.15f) * scaleY;
     if (m_text.empty()) return 0;
 
     if (!m_multiline) {
@@ -392,7 +392,7 @@ void Textbox::Draw() {
   BeginScissorMode((int)textArea.x, (int)textArea.y, (int)textArea.width, (int)textArea.height);
 
   Vector2 textPos = {textArea.x, textArea.y};
-  float scaledFontSize = m_fontSize * scale.y;
+  float scaledFontSize = (m_fontSize * 1.15f) * scale.y;
   Vector2 textSize = MeasureTextEx(m_font, m_text.c_str(), scaledFontSize, 1);
 
   // Single line scrolling & alignment logic

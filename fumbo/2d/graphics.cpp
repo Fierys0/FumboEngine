@@ -28,7 +28,7 @@ Texture2D CaptureScreenToTexture() {
 void DrawText(const std::string &text, Vector2 basePos, Font font,
               int baseFontSize, Color color) {
   Vector2 scale = GetUIScale();
-  float fontSize = baseFontSize * scale.y;
+  float fontSize = (baseFontSize * 1.15f) * scale.y;
   Vector2 offset = GetUIOffset();
   Vector2 position = {basePos.x * scale.x + offset.x,
                       basePos.y * scale.y + offset.y};
