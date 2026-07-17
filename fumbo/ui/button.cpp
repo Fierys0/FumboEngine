@@ -211,7 +211,7 @@ void Button::Draw() {
     // Draw text
     if (!text.empty()) {
       Vector2 scale = Fumbo::Utils::GetUIScale();
-      float fontSize = baseFontSize * scale.y;
+      float fontSize = (baseFontSize * 1.35f) * scale.y;
 
       float xPadding = 10.0f * scale.x;
       float yPadding = 10.0f * scale.y;
